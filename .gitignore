@@ -1,0 +1,17 @@
+@"
+node_modules/
+frontend/node_modules/
+backend/node_modules/
+dist/
+build/
+.env
+.env.local
+.DS_Store
+*.log
+npm-debug.log*
+.vscode/
+.idea/
+*.swp
+*.swo
+Thumbs.db
+"@ | Out-File -FilePath .gitignore -Encoding utf8

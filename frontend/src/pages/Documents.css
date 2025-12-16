@@ -1,0 +1,158 @@
+.documents-page {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.documents-content {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 24px;
+  background: white;
+  border-radius: 8px;
+  padding: 24px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.documents-sidebar {
+  border-right: 1px solid #e0e0e0;
+  padding-right: 24px;
+}
+
+.filters-section {
+  margin-bottom: 24px;
+}
+
+.filter-group {
+  margin-bottom: 16px;
+}
+
+.filter-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+}
+
+.folders-section h3 {
+  font-size: 16px;
+  margin-bottom: 12px;
+  color: #333;
+}
+
+.folders-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.folder-item {
+  padding: 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.folder-item:hover {
+  background: #f8f9fa;
+  border-color: #667eea;
+}
+
+.folder-item.active {
+  background: #e7f3ff;
+  border-color: #667eea;
+}
+
+.folder-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 4px;
+}
+
+.folder-meta {
+  display: flex;
+  gap: 8px;
+  font-size: 12px;
+  color: #666;
+}
+
+.folder-client {
+  font-weight: 500;
+}
+
+.folder-fy {
+  color: #999;
+}
+
+.documents-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.documents-table thead {
+  background: #f8f9fa;
+}
+
+.documents-table th {
+  padding: 12px;
+  text-align: left;
+  font-weight: 600;
+  color: #333;
+  border-bottom: 2px solid #dee2e6;
+}
+
+.documents-table td {
+  padding: 12px;
+  border-bottom: 1px solid #dee2e6;
+  color: #666;
+}
+
+.documents-table tbody tr:hover {
+  background: #f8f9fa;
+}
+
+.status-badge {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.status-requested {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.status-uploaded {
+  background: #cfe2ff;
+  color: #084298;
+}
+
+.status-reviewed {
+  background: #d1e7dd;
+  color: #0f5132;
+}
+
+.status-approved {
+  background: #d4edda;
+  color: #155724;
+}
+
+.action-button {
+  padding: 6px 12px;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.action-button:hover {
+  background: #5568d3;
+}
+

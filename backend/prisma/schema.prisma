@@ -1,0 +1,313 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  CA_ADMIN
+  CA_STAFF
+  CLIENT
+}
+
+enum ClientType {
+  INDIVIDUAL
+  BUSINESS
+}
+
+enum DocumentStatus {
+  REQUESTED
+  UPLOADED
+  REVIEWED
+  APPROVED
+}
+
+enum ComplianceFrequency {
+  ANNUAL
+  MONTHLY
+  QUARTERLY
+  EVENT_BASED
+}
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  FILED
+  APPROVED
+}
+
+enum ConversationType {
+  CA_CLIENT
+  INTERNAL
+}
+
+enum NotificationType {
+  DEADLINE_REMINDER
+  DOCUMENT_UPLOADED
+  FILING_COMPLETED
+}
+
+enum CalendarEventSource {
+  SYSTEM
+  MANUAL
+}
+
+model Firm {
+  id        String   @id @default(cuid())
+  name      String
+  address   String?
+  gstin     String?  @unique
+  createdAt DateTime @default(now())
+
+  users   User[]
+  clients Client[]
+
+  documentFolders DocumentFolder[]
+  documents       Document[]
+  complianceTasks ComplianceTask[]
+  conversations   Conversation[]
+  notifications   Notification[]
+  calendarEvents  CalendarEvent[]
+  auditLogs       AuditLog[]
+}
+
+model User {
+  id           String   @id @default(cuid())
+  firmId       String?
+  email        String   @unique
+  passwordHash String
+  name         String
+  mobile       String?
+  role         UserRole
+  status       String   @default("ACTIVE")
+  createdAt    DateTime @default(now())
+
+  // Fine-grained permissions (mainly for CA_STAFF / contributors)
+  canViewClients      Boolean @default(false)
+  canEditClients      Boolean @default(false)
+  canAccessDocuments  Boolean @default(false)
+  canAccessTasks      Boolean @default(false)
+  canAccessCalendar   Boolean @default(false)
+  canAccessChat       Boolean @default(false)
+
+  firm   Firm?   @relation(fields: [firmId], references: [id])
+  client Client?
+
+  uploadedDocuments Document[] @relation("DocumentUploadedBy")
+  documentComments  DocumentComment[]
+  createdTasks      ComplianceTask[] @relation("TaskCreatedBy")
+  assignedTasks     ComplianceTask[] @relation("TaskAssignedTo")
+  taskComments      TaskComment[]
+  conversations     Conversation[] @relation("ConversationCreatedBy")
+  messages          Message[]      @relation("MessageSender")
+  notifications     Notification[]
+  auditLogs         AuditLog[]
+  messageReads      MessageRead[]
+}
+
+model Client {
+  id             String      @id @default(cuid())
+  firmId         String
+  primaryUserId  String      @unique
+  type           ClientType
+  pan            String?
+  gstin          String?
+  cin            String?
+  displayName    String
+  createdAt      DateTime    @default(now())
+
+  firm        Firm       @relation(fields: [firmId], references: [id])
+  primaryUser User       @relation(fields: [primaryUserId], references: [id])
+
+  documentFolders DocumentFolder[]
+  documents       Document[]
+  complianceTasks ComplianceTask[]
+  conversations   Conversation[]
+  calendarEvents  CalendarEvent[]
+}
+
+model DocumentFolder {
+  id             String          @id @default(cuid())
+  firmId         String
+  clientId       String
+  financialYear  String
+  name           String
+  parentFolderId String?
+
+  firm        Firm    @relation(fields: [firmId], references: [id])
+  client      Client  @relation(fields: [clientId], references: [id])
+  parent      DocumentFolder? @relation("FolderToSubfolders", fields: [parentFolderId], references: [id])
+  subfolders  DocumentFolder[] @relation("FolderToSubfolders")
+  documents   Document[]
+}
+
+model Document {
+  id             String         @id @default(cuid())
+  folderId       String
+  firmId         String
+  clientId       String
+  fileName       String
+  mimeType       String
+  storagePath    String
+  versionGroupId String
+  versionNumber  Int
+  status         DocumentStatus
+  uploadedById   String
+  uploadedAt     DateTime       @default(now())
+
+  folder  DocumentFolder @relation(fields: [folderId], references: [id])
+  firm    Firm           @relation(fields: [firmId], references: [id])
+  client  Client         @relation(fields: [clientId], references: [id])
+  uploader User          @relation("DocumentUploadedBy", fields: [uploadedById], references: [id])
+
+  comments      DocumentComment[]
+  conversations Conversation[]
+}
+
+model DocumentComment {
+  id           String   @id @default(cuid())
+  documentId   String
+  authorUserId String
+  message      String
+  createdAt    DateTime @default(now())
+
+  document Document @relation(fields: [documentId], references: [id])
+  author   User     @relation(fields: [authorUserId], references: [id])
+}
+
+model ComplianceType {
+  id          String              @id @default(cuid())
+  code        String              @unique
+  displayName String
+  frequency   ComplianceFrequency
+  meta        Json?
+
+  tasks ComplianceTask[]
+}
+
+model ComplianceTask {
+  id                 String         @id @default(cuid())
+  firmId             String
+  clientId           String
+  complianceTypeId   String
+  periodStart        DateTime
+  periodEnd          DateTime
+  dueDate            DateTime
+  status             TaskStatus     @default(PENDING)
+  assignedToUserId   String?
+  createdByUserId    String
+  createdAt          DateTime       @default(now())
+
+  firm           Firm            @relation(fields: [firmId], references: [id])
+  client         Client          @relation(fields: [clientId], references: [id])
+  complianceType ComplianceType  @relation(fields: [complianceTypeId], references: [id])
+  assignedTo     User?           @relation("TaskAssignedTo", fields: [assignedToUserId], references: [id])
+  createdBy      User            @relation("TaskCreatedBy", fields: [createdByUserId], references: [id])
+
+  comments       TaskComment[]
+  conversations  Conversation[]
+  calendarEvents CalendarEvent[]
+}
+
+model TaskComment {
+  id           String   @id @default(cuid())
+  taskId       String
+  authorUserId String
+  message      String
+  createdAt    DateTime @default(now())
+
+  task   ComplianceTask @relation(fields: [taskId], references: [id])
+  author User           @relation(fields: [authorUserId], references: [id])
+}
+
+model Conversation {
+  id                String           @id @default(cuid())
+  firmId            String
+  clientId          String
+  createdByUserId   String
+  type              ConversationType
+  relatedDocumentId String?
+  relatedTaskId     String?
+  createdAt         DateTime         @default(now())
+
+  firm      Firm           @relation(fields: [firmId], references: [id])
+  client    Client         @relation(fields: [clientId], references: [id])
+  createdBy User           @relation("ConversationCreatedBy", fields: [createdByUserId], references: [id])
+  document  Document?      @relation(fields: [relatedDocumentId], references: [id])
+  task      ComplianceTask? @relation(fields: [relatedTaskId], references: [id])
+
+  messages Message[]
+}
+
+model Message {
+  id             String   @id @default(cuid())
+  conversationId String
+  senderUserId   String
+  body           String
+  createdAt      DateTime @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id])
+  sender       User         @relation("MessageSender", fields: [senderUserId], references: [id])
+  reads        MessageRead[]
+}
+
+model MessageRead {
+  id        String   @id @default(cuid())
+  messageId String
+  userId    String
+  readAt    DateTime @default(now())
+
+  message Message @relation(fields: [messageId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
+
+  @@unique([messageId, userId])
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  firmId    String
+  userId    String
+  type      NotificationType
+  payload   Json?
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+
+  firm Firm @relation(fields: [firmId], references: [id])
+  user User @relation(fields: [userId], references: [id])
+}
+
+model CalendarEvent {
+  id          String               @id @default(cuid())
+  firmId      String
+  clientId    String?
+  title       String
+  description String?
+  startAt     DateTime
+  endAt       DateTime
+  source      CalendarEventSource
+  relatedTaskId String?
+
+  firm   Firm           @relation(fields: [firmId], references: [id])
+  client Client?        @relation(fields: [clientId], references: [id])
+  task   ComplianceTask? @relation(fields: [relatedTaskId], references: [id])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  firmId     String
+  userId     String?
+  action     String
+  entityType String
+  entityId   String
+  metadata   Json?
+  createdAt  DateTime @default(now())
+  ipAddress  String?
+
+  firm Firm @relation(fields: [firmId], references: [id])
+  user User? @relation(fields: [userId], references: [id])
+}
+
