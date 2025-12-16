@@ -14,11 +14,11 @@ usersRouter.get("/", async (req, res) => {
   }
   const { role } = req.query;
 
-  const whereClause: { firmId: string; role?: string } = {
+  const whereClause: { firmId: string; role?: any } = {
     firmId: req.user.firmId,
   };
   if (role) {
-    whereClause.role = String(role).toUpperCase();
+    whereClause.role = String(role).toUpperCase() as any;
   }
 
   const users = await prisma.user.findMany({
