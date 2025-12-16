@@ -155,25 +155,33 @@ export const Team: React.FC = () => {
                     <td>
                       <PermissionDropdown
                         value={u.canAccessDocuments}
-                        onChange={(enabled) => updatePermission(u.id, { canAccessDocuments: enabled })}
+                        onChange={async (enabled) => {
+                          await updatePermission(u.id, { canAccessDocuments: enabled });
+                        }}
                       />
                     </td>
                     <td>
                       <PermissionDropdown
                         value={u.canAccessTasks}
-                        onChange={(enabled) => updatePermission(u.id, { canAccessTasks: enabled })}
+                        onChange={async (enabled) => {
+                          await updatePermission(u.id, { canAccessTasks: enabled });
+                        }}
                       />
                     </td>
                     <td>
                       <PermissionDropdown
                         value={u.canAccessCalendar}
-                        onChange={(enabled) => updatePermission(u.id, { canAccessCalendar: enabled })}
+                        onChange={async (enabled) => {
+                          await updatePermission(u.id, { canAccessCalendar: enabled });
+                        }}
                       />
                     </td>
                     <td>
                       <PermissionDropdown
                         value={u.canAccessChat}
-                        onChange={(enabled) => updatePermission(u.id, { canAccessChat: enabled })}
+                        onChange={async (enabled) => {
+                          await updatePermission(u.id, { canAccessChat: enabled });
+                        }}
                       />
                     </td>
                   </tr>
