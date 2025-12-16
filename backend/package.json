@@ -6,7 +6,7 @@
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
     "build": "tsc",
     "postinstall": "prisma generate",
-    "start": "prisma migrate deploy && node dist/server.js",
+    "start": "prisma migrate deploy && (npm run seed || true) && node dist/server.js",
     "seed": "ts-node --transpile-only prisma/seed.ts",
     "prisma:seed": "npm run seed"
   },
@@ -22,7 +22,8 @@
     "jsonwebtoken": "^9.0.3",
     "morgan": "^1.10.1",
     "multer": "^2.0.2",
-    "prisma": "^5.15.0"
+    "prisma": "^5.15.0",
+    "ts-node": "^10.9.2"
   },
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",
@@ -32,7 +33,6 @@
     "@types/morgan": "^1.9.10",
     "@types/multer": "^2.0.0",
     "@types/node": "^25.0.2",
-    "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.9.3"
   }
