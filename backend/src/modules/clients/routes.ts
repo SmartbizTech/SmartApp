@@ -105,9 +105,9 @@ clientsRouter.post(
             firmId: req.user!.firmId!,
             primaryUserId: user.id,
             type: type.toUpperCase() as any,
-            pan,
-            gstin,
-            cin,
+            pan: pan ?? null,
+            gstin: gstin ?? null,
+            cin: cin ?? null,
             displayName,
           },
         });

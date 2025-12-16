@@ -9,7 +9,7 @@ export interface AuthUser {
   id: string;
   firmId?: string | null;
   clientId?: string | null;
-  role: "CA_ADMIN" | "CA_STAFF" | "CLIENT";
+  role: "CA_ADMIN" | "CA_STAFF" | "CLIENT" | "SUPER_ADMIN";
 }
 
 declare global {

@@ -14,11 +14,15 @@ usersRouter.get("/", async (req, res) => {
   }
   const { role } = req.query;
 
+  const whereClause: { firmId: string; role?: string } = {
+    firmId: req.user.firmId,
+  };
+  if (role) {
+    whereClause.role = String(role).toUpperCase();
+  }
+
   const users = await prisma.user.findMany({
-    where: {
-      firmId: req.user.firmId,
-      role: role ? String(role).toUpperCase() : undefined,
-    },
+    where: whereClause,
     select: {
       id: true,
       name: true,
@@ -121,16 +125,25 @@ usersRouter.patch(
         return;
       }
 
+      const updateData: {
+        canViewClients?: boolean;
+        canEditClients?: boolean;
+        canAccessDocuments?: boolean;
+        canAccessTasks?: boolean;
+        canAccessCalendar?: boolean;
+        canAccessChat?: boolean;
+      } = {};
+      
+      if (canViewClients !== undefined) updateData.canViewClients = canViewClients;
+      if (canEditClients !== undefined) updateData.canEditClients = canEditClients;
+      if (canAccessDocuments !== undefined) updateData.canAccessDocuments = canAccessDocuments;
+      if (canAccessTasks !== undefined) updateData.canAccessTasks = canAccessTasks;
+      if (canAccessCalendar !== undefined) updateData.canAccessCalendar = canAccessCalendar;
+      if (canAccessChat !== undefined) updateData.canAccessChat = canAccessChat;
+
       const updated = await prisma.user.update({
         where: { id: req.params.id },
-        data: {
-          canViewClients,
-          canEditClients,
-          canAccessDocuments,
-          canAccessTasks,
-          canAccessCalendar,
-          canAccessChat,
-        },
+        data: updateData,
         select: {
           id: true,
           name: true,

@@ -131,16 +131,25 @@ adminRouter.patch("/users/:id/permissions", async (req, res) => {
   };
 
   try {
+    const updateData: {
+      canViewClients?: boolean;
+      canEditClients?: boolean;
+      canAccessDocuments?: boolean;
+      canAccessTasks?: boolean;
+      canAccessCalendar?: boolean;
+      canAccessChat?: boolean;
+    } = {};
+    
+    if (canViewClients !== undefined) updateData.canViewClients = canViewClients;
+    if (canEditClients !== undefined) updateData.canEditClients = canEditClients;
+    if (canAccessDocuments !== undefined) updateData.canAccessDocuments = canAccessDocuments;
+    if (canAccessTasks !== undefined) updateData.canAccessTasks = canAccessTasks;
+    if (canAccessCalendar !== undefined) updateData.canAccessCalendar = canAccessCalendar;
+    if (canAccessChat !== undefined) updateData.canAccessChat = canAccessChat;
+
     const user = await prisma.user.update({
       where: { id: req.params.id },
-      data: {
-        canViewClients,
-        canEditClients,
-        canAccessDocuments,
-        canAccessTasks,
-        canAccessCalendar,
-        canAccessChat,
-      },
+      data: updateData,
       select: {
         id: true,
         name: true,

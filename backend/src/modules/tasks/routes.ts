@@ -294,13 +294,18 @@ tasksRouter.post("/:id/comments", async (req, res) => {
     }
 
     // Verify task exists and user has access
+    const whereClause: { id: string; clientId?: string; firmId?: string } = {
+      id: req.params.id,
+    };
+    
+    if (req.user.role === "CLIENT" && req.user.clientId) {
+      whereClause.clientId = req.user.clientId;
+    } else if (req.user.firmId) {
+      whereClause.firmId = req.user.firmId;
+    }
+
     const task = await prisma.complianceTask.findFirst({
-      where: {
-        id: req.params.id,
-        ...(req.user.role === "CLIENT" && req.user.clientId
-          ? { clientId: req.user.clientId }
-          : { firmId: req.user.firmId }),
-      },
+      where: whereClause,
     });
 
     if (!task) {
