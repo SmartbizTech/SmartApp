@@ -2,12 +2,34 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
 import type { Client } from '../types';
+import { DataGrid, Column, Paging, Pager, FilterRow, SearchPanel, MasterDetail, Export } from 'devextreme-react/data-grid';
+import { Button } from 'devextreme-react/button';
+import { LoadPanel } from 'devextreme-react/load-panel';
+import { PageHeader } from '../components/PageHeader';
 import './Clients.css';
+
+const ClientDetailTemplate = ({ data }: { data: Client }) => {
+  return (
+    <div className="dx-client-detail">
+      <div className="dx-client-detail-grid">
+        <div><strong>PAN:</strong> {data.pan || '-'}</div>
+        <div><strong>GSTIN:</strong> {data.gstin || '-'}</div>
+        <div><strong>CIN:</strong> {data.cin || '-'}</div>
+        {data.primaryUser && (
+          <>
+            <div><strong>Contact Name:</strong> {data.primaryUser.name}</div>
+            <div><strong>Contact Email:</strong> {data.primaryUser.email}</div>
+          </>
+        )}
+        <div><strong>Created:</strong> {new Date(data.createdAt).toLocaleDateString()}</div>
+      </div>
+    </div>
+  );
+};
 
 export const Clients: React.FC = () => {
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -26,91 +48,89 @@ export const Clients: React.FC = () => {
     }
   };
 
-  const filteredClients = clients.filter((client) => {
-    const term = search.toLowerCase();
-    if (!term) return true;
-    return (
-      client.displayName.toLowerCase().includes(term) ||
-      (client.pan && client.pan.toLowerCase().includes(term)) ||
-      (client.gstin && client.gstin.toLowerCase().includes(term)) ||
-      (client.cin && client.cin.toLowerCase().includes(term))
-    );
-  });
+  const onRowClick = (e: any) => {
+    if (e.data?.id) {
+      navigate(`/clients/${e.data.id}`);
+    }
+  };
 
-  if (loading) {
-    return <div className="page-loading">Loading clients...</div>;
-  }
+  const typeCellRender = (data: any) => {
+    const type = data.value?.toLowerCase() || '';
+    return (
+      <span className={`client-type type-${type}`}>
+        {data.value || ''}
+      </span>
+    );
+  };
 
   return (
-    <div className="clients-page">
-      <div className="page-header">
-        <h1>Clients</h1>
-        <div className="page-actions">
-          <input
-            type="text"
-            className="filter-select"
-            placeholder="Search by name, PAN, GSTIN, CIN"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
+    <div className="dx-clients-page">
+      <PageHeader
+        title="Clients"
+        subtitle="Manage your clients"
+        actions={
+          <Button
+            text="Add Client"
+            type="default"
+            icon="plus"
+            onClick={() => navigate('/clients/new')}
           />
-          <button className="primary-button" onClick={() => navigate('/clients/new')}>
-            Add Client
-          </button>
-        </div>
-      </div>
+        }
+      />
 
-      <div className="clients-grid">
-        {filteredClients.length === 0 ? (
-          <div className="empty-state">
-            <p>No clients found</p>
-            <button className="primary-button" onClick={() => navigate('/clients/new')}>
-              Add Your First Client
-            </button>
-          </div>
-        ) : (
-          filteredClients.map((client) => (
-            <div
-              key={client.id}
-              className="client-card"
-              onClick={() => navigate(`/clients/${client.id}`)}
-            >
-              <div className="client-header">
-                <h3>{client.displayName}</h3>
-                <span className={`client-type type-${client.type.toLowerCase()}`}>
-                  {client.type}
-                </span>
-              </div>
-              <div className="client-details">
-                {client.pan && (
-                  <div className="detail-item">
-                    <span className="label">PAN:</span>
-                    <span className="value">{client.pan}</span>
-                  </div>
-                )}
-                {client.gstin && (
-                  <div className="detail-item">
-                    <span className="label">GSTIN:</span>
-                    <span className="value">{client.gstin}</span>
-                  </div>
-                )}
-                {client.cin && (
-                  <div className="detail-item">
-                    <span className="label">CIN:</span>
-                    <span className="value">{client.cin}</span>
-                  </div>
-                )}
-                {client.primaryUser && (
-                  <div className="detail-item">
-                    <span className="label">Contact:</span>
-                    <span className="value">{client.primaryUser.email}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          ))
-        )}
-      </div>
+      <DataGrid
+        dataSource={clients}
+        showBorders={true}
+        columnAutoWidth={true}
+        rowAlternationEnabled={true}
+        onRowClick={onRowClick}
+        keyExpr="id"
+      >
+        <Export enabled={true} />
+        <MasterDetail
+          enabled={true}
+          component={ClientDetailTemplate}
+        />
+        <Column
+          dataField="displayName"
+          caption="Name"
+          sortOrder="asc"
+        />
+        <Column
+          dataField="type"
+          caption="Type"
+          cellRender={typeCellRender}
+        />
+        <Column
+          dataField="pan"
+          caption="PAN"
+        />
+        <Column
+          dataField="gstin"
+          caption="GSTIN"
+        />
+        <Column
+          dataField="cin"
+          caption="CIN"
+        />
+        <Column
+          dataField="primaryUser.email"
+          caption="Contact Email"
+          cellRender={(data: any) => data.data?.primaryUser?.email || '-'}
+        />
+        <Column
+          dataField="createdAt"
+          caption="Created Date"
+          dataType="date"
+          format="shortDate"
+        />
+        <FilterRow visible={true} />
+        <SearchPanel visible={true} />
+        <Paging defaultPageSize={20} />
+        <Pager showPageSizeSelector={true} allowedPageSizes={[10, 20, 50]} showInfo={true} />
+      </DataGrid>
+
+      <LoadPanel visible={loading} />
     </div>
   );
 };
-

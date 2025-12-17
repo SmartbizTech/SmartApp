@@ -1,0 +1,192 @@
+/* DevExtreme Theme Customization */
+
+/* Color Variables */
+:root {
+  --dx-primary-color: #1976d2;
+  --dx-secondary-color: #424242;
+  --dx-success-color: #4caf50;
+  --dx-warning-color: #ff9800;
+  --dx-danger-color: #f44336;
+  --dx-info-color: #2196f3;
+  
+  --dx-text-primary: #212121;
+  --dx-text-secondary: #757575;
+  --dx-text-disabled: #bdbdbd;
+  
+  --dx-bg-primary: #ffffff;
+  --dx-bg-secondary: #f5f5f5;
+  --dx-bg-hover: #f0f0f0;
+  
+  --dx-border-color: #e0e0e0;
+  --dx-border-radius: 4px;
+  
+  --dx-spacing-xs: 4px;
+  --dx-spacing-sm: 8px;
+  --dx-spacing-md: 16px;
+  --dx-spacing-lg: 24px;
+  --dx-spacing-xl: 32px;
+}
+
+/* Global DevExtreme Overrides */
+.dx-widget {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+}
+
+/* Consistent spacing */
+.dx-form-item {
+  margin-bottom: var(--dx-spacing-md);
+}
+
+/* Card styling */
+.dx-card {
+  border-radius: var(--dx-border-radius);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Button consistency */
+.dx-button {
+  border-radius: var(--dx-border-radius);
+  font-weight: 500;
+}
+
+/* DataGrid styling */
+.dx-datagrid {
+  border-radius: var(--dx-border-radius);
+}
+
+.dx-datagrid-headers {
+  background-color: var(--dx-bg-secondary);
+}
+
+/* Form styling */
+.dx-textbox,
+.dx-selectbox,
+.dx-datebox,
+.dx-textarea {
+  border-radius: var(--dx-border-radius);
+}
+
+/* Popup styling */
+.dx-popup {
+  border-radius: var(--dx-border-radius);
+}
+
+/* Tabs styling */
+.dx-tabs {
+  border-bottom: 2px solid var(--dx-border-color);
+}
+
+.dx-tab {
+  border-radius: var(--dx-border-radius) var(--dx-border-radius) 0 0;
+}
+
+/* Status badges */
+.status-badge {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: capitalize;
+  display: inline-block;
+}
+
+.status-pending {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.status-in_progress {
+  background: #cfe2ff;
+  color: #084298;
+}
+
+.status-filed {
+  background: #d1e7dd;
+  color: #0f5132;
+}
+
+.status-approved {
+  background: #d4edda;
+  color: #155724;
+}
+
+.status-requested {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.status-uploaded {
+  background: #cfe2ff;
+  color: #084298;
+}
+
+.status-reviewed {
+  background: #d1e7dd;
+  color: #0f5132;
+}
+
+/* Client type badges */
+.client-type {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: capitalize;
+  display: inline-block;
+}
+
+.type-individual {
+  background: #e7f3ff;
+  color: #084298;
+}
+
+.type-business {
+  background: #fff3cd;
+  color: #856404;
+}
+
+/* Role badges */
+.role-badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.role-ca_admin {
+  background: #eef2ff;
+  color: #4338ca;
+}
+
+.role-ca_staff {
+  background: #ecfdf3;
+  color: #166534;
+}
+
+.role-client {
+  background: #fef9c3;
+  color: #854d0e;
+}
+
+/* Responsive breakpoints */
+@media (max-width: 768px) {
+  .dx-stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .dx-dashboard-content {
+    grid-template-columns: 1fr;
+  }
+  
+  .dx-documents-layout {
+    grid-template-columns: 1fr;
+  }
+  
+  .dx-chat-container {
+    grid-template-columns: 1fr;
+  }
+}
+

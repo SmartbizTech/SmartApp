@@ -1,6 +1,21 @@
-.calendar-page {
-  max-width: 1200px;
+.dx-calendar-page {
+  max-width: 1400px;
   margin: 0 auto;
+}
+
+.dx-appointment {
+  padding: 4px;
+}
+
+.dx-appointment-title {
+  font-weight: 500;
+  font-size: 13px;
+}
+
+.dx-appointment-client {
+  font-size: 11px;
+  color: #666;
+  margin-top: 2px;
 }
 
 .calendar-content {

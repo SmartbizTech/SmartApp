@@ -1,0 +1,12 @@
+.dx-profile-page {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.dx-form-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+

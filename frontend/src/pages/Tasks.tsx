@@ -1,7 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../api/client';
-import type { Client, ComplianceTask, ComplianceType } from '../types';
+import type { Client, ComplianceTask, ComplianceType, AdminUser } from '../types';
+import { DataGrid, Column, Paging, Pager, FilterRow, SearchPanel, Grouping, GroupPanel, Export } from 'devextreme-react/data-grid';
+import { Popup } from 'devextreme-react/popup';
+import { Form, Item, Label, RequiredRule } from 'devextreme-react/form';
+import { SelectBox } from 'devextreme-react/select-box';
+import { DateBox } from 'devextreme-react/date-box';
+import { Button } from 'devextreme-react/button';
+import { Toolbar, Item as ToolbarItem } from 'devextreme-react/toolbar';
+import { LoadPanel } from 'devextreme-react/load-panel';
+import { PageHeader } from '../components/PageHeader';
 import './Tasks.css';
 
 export const Tasks: React.FC = () => {
@@ -15,10 +24,12 @@ export const Tasks: React.FC = () => {
   const [loadingClients, setLoadingClients] = useState(false);
   const [newTaskClientId, setNewTaskClientId] = useState('');
   const [newTaskTypeId, setNewTaskTypeId] = useState('');
-  const [newTaskPeriodStart, setNewTaskPeriodStart] = useState('');
-  const [newTaskPeriodEnd, setNewTaskPeriodEnd] = useState('');
-  const [newTaskDueDate, setNewTaskDueDate] = useState('');
+  const [newTaskPeriodStart, setNewTaskPeriodStart] = useState<Date | null>(null);
+  const [newTaskPeriodEnd, setNewTaskPeriodEnd] = useState<Date | null>(null);
+  const [newTaskDueDate, setNewTaskDueDate] = useState<Date | null>(null);
   const [creating, setCreating] = useState(false);
+  const [assignees, setAssignees] = useState<AdminUser[]>([]);
+  const [newTaskAssignedToUserId, setNewTaskAssignedToUserId] = useState<string | null>(null);
 
   useEffect(() => {
     loadTasks();
@@ -27,6 +38,7 @@ export const Tasks: React.FC = () => {
   useEffect(() => {
     if (user?.role !== 'CLIENT') {
       loadClientsAndTypes();
+      loadAssignees();
     }
   }, [user]);
 
@@ -60,8 +72,19 @@ export const Tasks: React.FC = () => {
     }
   };
 
-  const handleCreateTask = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const loadAssignees = async () => {
+    try {
+      const data = await api.get<AdminUser[]>('/users');
+      // Only CA_ADMIN and CA_STAFF can be assignees
+      setAssignees(
+        data.filter((u) => u.role === 'CA_ADMIN' || u.role === 'CA_STAFF')
+      );
+    } catch (error) {
+      console.error('Failed to load assignees:', error);
+    }
+  };
+
+  const handleCreateTask = async () => {
     if (!newTaskClientId || !newTaskTypeId || !newTaskPeriodStart || !newTaskPeriodEnd || !newTaskDueDate) {
       alert('Please fill all required fields');
       return;
@@ -72,16 +95,18 @@ export const Tasks: React.FC = () => {
       await api.post<ComplianceTask>('/tasks', {
         clientId: newTaskClientId,
         complianceTypeId: newTaskTypeId,
-        periodStart: newTaskPeriodStart,
-        periodEnd: newTaskPeriodEnd,
-        dueDate: newTaskDueDate,
+        periodStart: newTaskPeriodStart.toISOString().split('T')[0],
+        periodEnd: newTaskPeriodEnd.toISOString().split('T')[0],
+        dueDate: newTaskDueDate.toISOString().split('T')[0],
+        assignedToUserId: newTaskAssignedToUserId || undefined,
       });
       setShowCreateModal(false);
       setNewTaskClientId('');
       setNewTaskTypeId('');
-      setNewTaskPeriodStart('');
-      setNewTaskPeriodEnd('');
-      setNewTaskDueDate('');
+      setNewTaskPeriodStart(null);
+      setNewTaskPeriodEnd(null);
+      setNewTaskDueDate(null);
+      setNewTaskAssignedToUserId(null);
       await loadTasks();
     } catch (error) {
       console.error('Failed to create task:', error);
@@ -91,176 +116,255 @@ export const Tasks: React.FC = () => {
     }
   };
 
-  if (loading) {
-    return <div className="page-loading">Loading tasks...</div>;
-  }
+  const statusCellRender = (data: any) => {
+    const status = data.value?.toLowerCase() || '';
+    const statusClass = `status-badge status-${status}`;
+    return (
+      <span className={statusClass}>
+        {data.value?.replace('_', ' ') || ''}
+      </span>
+    );
+  };
+
+  const filterButtons = [
+    { text: 'All', value: 'all' },
+    { text: 'Pending', value: 'PENDING' },
+    { text: 'In Progress', value: 'IN_PROGRESS' },
+    { text: 'Filed', value: 'FILED' },
+  ];
+
+  const toolbarItems = [
+    {
+      location: 'before',
+      widget: 'dxButton',
+      options: {
+        text: 'Create Task',
+        type: 'default',
+        icon: 'plus',
+        onClick: async () => {
+          await loadClientsAndTypes();
+          setShowCreateModal(true);
+        },
+        disabled: loadingClients || user?.role === 'CLIENT',
+      },
+    },
+    {
+      location: 'after',
+      widget: 'dxButtonGroup',
+      options: {
+        items: filterButtons,
+        selectedItemKeys: [filter],
+        onItemClick: (e: any) => {
+          setFilter(e.itemData.value);
+        },
+        stylingMode: 'outlined',
+      },
+    },
+  ];
 
   return (
-    <div className="tasks-page">
-      <div className="page-header">
-        <h1>Compliance Tasks</h1>
-        {user?.role !== 'CLIENT' && (
-          <button
-            className="primary-button"
-            onClick={async () => {
-              await loadClientsAndTypes();
-              setShowCreateModal(true);
+    <div className="dx-tasks-page">
+      <PageHeader
+        title="Compliance Tasks"
+        subtitle="Manage and track compliance tasks"
+      />
+
+      <DataGrid
+        dataSource={tasks}
+        showBorders={true}
+        columnAutoWidth={true}
+        rowAlternationEnabled={true}
+        onRowPrepared={(e: any) => {
+          if (e.rowType === 'data') {
+            e.rowElement.style.cursor = 'pointer';
+          }
+        }}
+      >
+        <Export enabled={true} />
+        <Grouping autoExpandAll={false} />
+        <GroupPanel visible={true} />
+        <Column
+          dataField="complianceType.displayName"
+          caption="Compliance Type"
+          cellRender={(data: any) => data.data?.complianceType?.displayName || ''}
+          groupIndex={0}
+        />
+        <Column
+          dataField="client.displayName"
+          caption="Client"
+          cellRender={(data: any) => data.data?.client?.displayName || ''}
+        />
+        <Column
+          dataField="periodStart"
+          caption="Period Start"
+          dataType="date"
+          format="shortDate"
+        />
+        <Column
+          dataField="periodEnd"
+          caption="Period End"
+          dataType="date"
+          format="shortDate"
+        />
+        <Column
+          dataField="dueDate"
+          caption="Due Date"
+          dataType="date"
+          format="shortDate"
+        />
+        <Column
+          dataField="status"
+          caption="Status"
+          cellRender={statusCellRender}
+        />
+        <Column
+          dataField="assignedTo.name"
+          caption="Assigned To"
+          cellRender={(data: any) => {
+            if (user?.role === 'CLIENT') {
+              return data.data?.assignedTo?.name || '-';
+            }
+            return (
+              <SelectBox
+                dataSource={assignees}
+                displayExpr="name"
+                valueExpr="id"
+                value={data.data?.assignedTo?.id || null}
+                placeholder="Unassigned"
+                onValueChanged={async (e: any) => {
+                  try {
+                    await api.patch(`/tasks/${data.data.id}/assign`, {
+                      assignedToUserId: e.value || null,
+                    });
+                    await loadTasks();
+                  } catch (error: any) {
+                    console.error('Failed to assign task:', error);
+                    alert(error?.message || 'Failed to assign task');
+                  }
+                }}
+              />
+            );
+          }}
+        />
+        <FilterRow visible={true} />
+        <SearchPanel visible={true} />
+        <Paging defaultPageSize={20} />
+        <Pager showPageSizeSelector={true} allowedPageSizes={[10, 20, 50]} showInfo={true} />
+      </DataGrid>
+
+      <Popup
+        visible={showCreateModal}
+        onHiding={() => setShowCreateModal(false)}
+        showTitle={true}
+        title="Create Compliance Task"
+        width={600}
+        height="auto"
+        showCloseButton={true}
+      >
+        <Form formData={{}}>
+          <Item
+            dataField="clientId"
+            editorType="dxSelectBox"
+            editorOptions={{
+              dataSource: clients,
+              displayExpr: 'displayName',
+              valueExpr: 'id',
+              value: newTaskClientId,
+              onValueChanged: (e: any) => setNewTaskClientId(e.value),
+              disabled: loadingClients || clients.length === 0,
+              placeholder: loadingClients ? 'Loading clients...' : clients.length === 0 ? 'No clients available' : 'Select client',
             }}
-            disabled={loadingClients}
           >
-            {loadingClients ? 'Loading...' : 'Create Task'}
-          </button>
-        )}
-      </div>
-
-      <div className="tasks-filters">
-        <button
-          className={`filter-button ${filter === 'all' ? 'active' : ''}`}
-          onClick={() => setFilter('all')}
-        >
-          All
-        </button>
-        <button
-          className={`filter-button ${filter === 'PENDING' ? 'active' : ''}`}
-          onClick={() => setFilter('PENDING')}
-        >
-          Pending
-        </button>
-        <button
-          className={`filter-button ${filter === 'IN_PROGRESS' ? 'active' : ''}`}
-          onClick={() => setFilter('IN_PROGRESS')}
-        >
-          In Progress
-        </button>
-        <button
-          className={`filter-button ${filter === 'FILED' ? 'active' : ''}`}
-          onClick={() => setFilter('FILED')}
-        >
-          Filed
-        </button>
-      </div>
-
-      <div className="tasks-list">
-        {tasks.length === 0 ? (
-          <div className="empty-state">
-            <p>No tasks found</p>
-          </div>
-        ) : (
-          tasks.map((task) => (
-            <div key={task.id} className="task-item">
-              <div className="task-main">
-                <div className="task-info">
-                  <h3>{task.complianceType.displayName}</h3>
-                  <p className="task-client">{task.client.displayName}</p>
-                  <p className="task-period">
-                    Period: {new Date(task.periodStart).toLocaleDateString()} -{' '}
-                    {new Date(task.periodEnd).toLocaleDateString()}
-                  </p>
-                </div>
-                <div className="task-meta">
-                  <span className={`status-badge status-${task.status.toLowerCase()}`}>
-                    {task.status.replace('_', ' ')}
-                  </span>
-                  {task.assignedTo && (
-                    <p className="task-assigned">Assigned to: {task.assignedTo.name}</p>
-                  )}
-                  <p className="task-due">
-                    Due: {new Date(task.dueDate).toLocaleDateString()}
-                  </p>
-                </div>
-              </div>
+            <Label text="Client" />
+            <RequiredRule />
+          </Item>
+          <Item
+            dataField="complianceTypeId"
+            editorType="dxSelectBox"
+            editorOptions={{
+              dataSource: types,
+              displayExpr: 'displayName',
+              valueExpr: 'id',
+              value: newTaskTypeId,
+              onValueChanged: (e: any) => setNewTaskTypeId(e.value),
+              placeholder: 'Select compliance type',
+            }}
+          >
+            <Label text="Compliance Type" />
+            <RequiredRule />
+          </Item>
+          <Item
+            dataField="periodStart"
+            editorType="dxDateBox"
+            editorOptions={{
+              value: newTaskPeriodStart,
+              onValueChanged: (e: any) => setNewTaskPeriodStart(e.value),
+              type: 'date',
+            }}
+          >
+            <Label text="Period Start" />
+            <RequiredRule />
+          </Item>
+          <Item
+            dataField="periodEnd"
+            editorType="dxDateBox"
+            editorOptions={{
+              value: newTaskPeriodEnd,
+              onValueChanged: (e: any) => setNewTaskPeriodEnd(e.value),
+              type: 'date',
+            }}
+          >
+            <Label text="Period End" />
+            <RequiredRule />
+          </Item>
+          <Item
+            dataField="dueDate"
+            editorType="dxDateBox"
+            editorOptions={{
+              value: newTaskDueDate,
+              onValueChanged: (e: any) => setNewTaskDueDate(e.value),
+              type: 'date',
+            }}
+          >
+            <Label text="Due Date" />
+            <RequiredRule />
+          </Item>
+          {user?.role !== 'CLIENT' && (
+            <Item
+              dataField="assignedToUserId"
+              editorType="dxSelectBox"
+              editorOptions={{
+                dataSource: assignees,
+                displayExpr: 'name',
+                valueExpr: 'id',
+                value: newTaskAssignedToUserId,
+                onValueChanged: (e: any) => setNewTaskAssignedToUserId(e.value),
+                placeholder: 'Assign to (optional)',
+              }}
+            >
+              <Label text="Assignee" />
+            </Item>
+          )}
+          <Item>
+            <div className="dx-form-actions">
+              <Button
+                text="Cancel"
+                stylingMode="outlined"
+                onClick={() => setShowCreateModal(false)}
+                disabled={creating}
+              />
+              <Button
+                text={creating ? 'Creating...' : 'Create Task'}
+                type="default"
+                onClick={handleCreateTask}
+                disabled={creating}
+              />
             </div>
-          ))
-        )}
-      </div>
+          </Item>
+        </Form>
+      </Popup>
 
-      {showCreateModal && user?.role !== 'CLIENT' && (
-        <div className="modal-backdrop">
-          <div className="modal">
-            <h2>Create Compliance Task</h2>
-            <form onSubmit={handleCreateTask} className="form-grid">
-              <div className="form-field">
-                <label>Client</label>
-                <select
-                  value={newTaskClientId}
-                  onChange={(e) => setNewTaskClientId(e.target.value)}
-                  required
-                  disabled={loadingClients || clients.length === 0}
-                >
-                  <option value="">
-                    {loadingClients ? 'Loading clients...' : clients.length === 0 ? 'No clients available' : 'Select client'}
-                  </option>
-                  {clients.map((client) => (
-                    <option key={client.id} value={client.id}>
-                      {client.displayName}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="form-field">
-                <label>Compliance Type</label>
-                <select
-                  value={newTaskTypeId}
-                  onChange={(e) => setNewTaskTypeId(e.target.value)}
-                  required
-                >
-                  <option value="">Select type</option>
-                  {types.map((type) => (
-                    <option key={type.id} value={type.id}>
-                      {type.displayName}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="form-field">
-                <label>Period Start</label>
-                <input
-                  type="date"
-                  value={newTaskPeriodStart}
-                  onChange={(e) => setNewTaskPeriodStart(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="form-field">
-                <label>Period End</label>
-                <input
-                  type="date"
-                  value={newTaskPeriodEnd}
-                  onChange={(e) => setNewTaskPeriodEnd(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="form-field">
-                <label>Due Date</label>
-                <input
-                  type="date"
-                  value={newTaskDueDate}
-                  onChange={(e) => setNewTaskDueDate(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="form-actions">
-                <button
-                  type="button"
-                  className="secondary-button"
-                  onClick={() => setShowCreateModal(false)}
-                  disabled={creating}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="primary-button"
-                  disabled={creating}
-                >
-                  {creating ? 'Creating...' : 'Create Task'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <LoadPanel visible={loading} />
     </div>
   );
 };
-

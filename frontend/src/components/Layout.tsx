@@ -1,7 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import type { ReactNode } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import Toolbar, { Item } from 'devextreme-react/toolbar';
+import Drawer from 'devextreme-react/drawer';
+import List from 'devextreme-react/list';
+import { Button } from 'devextreme-react/button';
+import { UserPanel } from './UserPanel';
 import './Layout.css';
 
 interface LayoutProps {
@@ -12,72 +17,110 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const isActive = (path: string) => location.pathname.startsWith(path);
 
   const getNavItems = () => {
     if (user?.role === 'SUPER_ADMIN') {
       return [
-        { path: '/admin', label: 'Admin' },
+        { id: '/admin', text: 'Admin', icon: 'admin' },
       ];
     }
 
     if (user?.role === 'CLIENT') {
       return [
-        { path: '/dashboard', label: 'Dashboard' },
-        { path: '/documents', label: 'Documents' },
-        { path: '/tasks', label: 'Tasks' },
-        { path: '/calendar', label: 'Calendar' },
-        { path: '/chat', label: 'Messages' },
+        { id: '/dashboard', text: 'Dashboard', icon: 'home' },
+        { id: '/documents', text: 'Documents', icon: 'file' },
+        { id: '/tasks', text: 'Tasks', icon: 'checklist' },
+        { id: '/calendar', text: 'Calendar', icon: 'event' },
+        { id: '/chat', text: 'Messages', icon: 'message' },
       ];
     } else {
       const items = [
-        { path: '/dashboard', label: 'Dashboard' },
-        { path: '/clients', label: 'Clients' },
-        { path: '/documents', label: 'Documents' },
-        { path: '/tasks', label: 'Tasks' },
-        { path: '/calendar', label: 'Calendar' },
-        { path: '/chat', label: 'Messages' },
+        { id: '/dashboard', text: 'Dashboard', icon: 'home' },
+        { id: '/clients', text: 'Clients', icon: 'group' },
+        { id: '/documents', text: 'Documents', icon: 'file' },
+        { id: '/tasks', text: 'Tasks', icon: 'checklist' },
+        { id: '/calendar', text: 'Calendar', icon: 'event' },
+        { id: '/chat', text: 'Messages', icon: 'message' },
       ];
       if (user?.role === 'CA_ADMIN') {
-        items.splice(2, 0, { path: '/team', label: 'Team' });
+        items.splice(2, 0, { id: '/team', text: 'Team', icon: 'user' });
       }
       return items;
     }
   };
 
+  const menuItems = getNavItems();
+
+  const onMenuItemClick = (e: any) => {
+    navigate(e.itemData.id);
+    setDrawerOpen(false);
+  };
+
+  const menuItemRender = (item: any) => {
+    const active = isActive(item.id);
+    return (
+      <div className={`dx-menu-item ${active ? 'dx-state-selected' : ''}`}>
+        <i className={`dx-icon dx-icon-${item.icon}`}></i>
+        <span>{item.text}</span>
+      </div>
+    );
+  };
+
+  const toolbarItems = [
+    {
+      widget: 'dxButton',
+      location: 'before',
+      options: {
+        icon: 'menu',
+        onClick: () => setDrawerOpen(!drawerOpen),
+        stylingMode: 'text',
+      },
+    },
+    {
+      widget: 'dxButton',
+      location: 'before',
+      options: {
+        text: 'CA Portal',
+        stylingMode: 'text',
+        onClick: () => navigate(user?.role === 'SUPER_ADMIN' ? '/admin' : '/dashboard'),
+      },
+    },
+    {
+      location: 'after',
+      template: 'userPanel',
+    },
+  ];
+
   return (
-    <div className="layout">
-      <nav className="navbar">
-        <div className="nav-content">
-          <div
-            className="nav-brand"
-            onClick={() => navigate(user?.role === 'SUPER_ADMIN' ? '/admin' : '/dashboard')}
-          >
-            <h2>CA Portal</h2>
-          </div>
-          <div className="nav-links">
-            {getNavItems().map((item) => (
-              <button
-                key={item.path}
-                className={`nav-link ${isActive(item.path) ? 'active' : ''}`}
-                onClick={() => navigate(item.path)}
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
-          <div className="nav-user">
-            <span className="user-name">{user?.name}</span>
-            <span className="user-role">{user?.role.replace('_', ' ')}</span>
-            <button className="logout-button" onClick={logout}>
-              Logout
-            </button>
-          </div>
+    <div className="dx-layout">
+      <Toolbar items={toolbarItems}>
+        <Item location="after" template="userPanel">
+          <UserPanel user={user} onLogout={logout} />
+        </Item>
+      </Toolbar>
+
+      <Drawer
+        opened={drawerOpen}
+        openedStateMode="overlap"
+        position="before"
+        revealMode="slide"
+        height="100%"
+        closeOnOutsideClick={true}
+        onOpenedChange={setDrawerOpen}
+        template="menu"
+      >
+        <div className="dx-drawer-content">
+          {children}
         </div>
-      </nav>
-      <main className="main-content">{children}</main>
+        <List
+          dataSource={menuItems}
+          onItemClick={onMenuItemClick}
+          itemRender={menuItemRender}
+        />
+      </Drawer>
     </div>
   );
 };
-

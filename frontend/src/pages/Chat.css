@@ -1,10 +1,10 @@
-.chat-page {
+.dx-chat-page {
   max-width: 1400px;
   margin: 0 auto;
   height: calc(100vh - 200px);
 }
 
-.chat-container {
+.dx-chat-container {
   display: grid;
   grid-template-columns: 300px 1fr;
   gap: 20px;
@@ -15,29 +15,24 @@
   overflow: hidden;
 }
 
-.conversations-sidebar {
+.dx-conversations-sidebar {
   border-right: 1px solid #e0e0e0;
   display: flex;
   flex-direction: column;
 }
 
-.conversations-header {
+.dx-conversations-header {
   padding: 20px;
   border-bottom: 1px solid #e0e0e0;
 }
 
-.conversations-header h2 {
+.dx-conversations-header h2 {
   font-size: 20px;
   color: #333;
   margin: 0;
 }
 
-.conversations-list {
-  flex: 1;
-  overflow-y: auto;
-}
-
-.conversation-item {
+.dx-conversation-item {
   padding: 16px 20px;
   border-bottom: 1px solid #f0f0f0;
   cursor: pointer;
@@ -47,22 +42,22 @@
   align-items: center;
 }
 
-.conversation-item:hover {
+.dx-conversation-item:hover {
   background: #f8f9fa;
 }
 
-.conversation-item.active {
+.dx-conversation-item.active {
   background: #e7f3ff;
   border-left: 4px solid #667eea;
 }
 
-.conversation-info h3 {
+.dx-conversation-info h3 {
   font-size: 14px;
   color: #333;
   margin: 0 0 4px 0;
 }
 
-.last-message {
+.dx-last-message {
   font-size: 12px;
   color: #666;
   margin: 0;
@@ -71,7 +66,7 @@
   white-space: nowrap;
 }
 
-.unread-badge {
+.dx-unread-badge {
   background: #667eea;
   color: white;
   border-radius: 12px;
@@ -82,13 +77,28 @@
   text-align: center;
 }
 
-.chat-main {
+.dx-chat-main {
   display: flex;
   flex-direction: column;
   height: 100%;
 }
 
-.messages-container {
+.dx-chat-placeholder {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #999;
+  font-size: 16px;
+}
+
+.dx-empty-state {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+}
+
+.dx-messages-container {
   flex: 1;
   overflow-y: auto;
   padding: 20px;
@@ -97,46 +107,52 @@
   gap: 16px;
 }
 
-.message {
+.dx-message {
   max-width: 70%;
   padding: 12px;
   border-radius: 8px;
   background: #f0f0f0;
 }
 
-.message.read {
+.dx-message.read {
   background: #e7f3ff;
 }
 
-.message-header {
+.dx-message-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 4px;
 }
 
-.message-header strong {
+.dx-message-header strong {
   font-size: 14px;
   color: #333;
 }
 
-.message-time {
+.dx-message-time {
   font-size: 11px;
   color: #999;
 }
 
-.message-body {
+.dx-message-body {
   font-size: 14px;
   color: #333;
   line-height: 1.5;
 }
 
-.message-input {
+.dx-message-input {
   border-top: 1px solid #e0e0e0;
   padding: 16px;
   display: flex;
+  flex-direction: column;
   gap: 12px;
-  align-items: flex-end;
+}
+
+.dx-message-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
 }
 
 .message-input textarea {

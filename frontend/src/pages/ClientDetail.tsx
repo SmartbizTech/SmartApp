@@ -2,6 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { api } from '../api/client';
 import type { CalendarEvent, Client, ComplianceTask } from '../types';
+import { Form, Item, Label, RequiredRule } from 'devextreme-react/form';
+import { Tabs, Tab } from 'devextreme-react/tabs';
+import { DataGrid, Column, Paging, Pager, FilterRow } from 'devextreme-react/data-grid';
+import { Button } from 'devextreme-react/button';
+import { LoadPanel } from 'devextreme-react/load-panel';
+import { PageHeader } from '../components/PageHeader';
 import './Clients.css';
 
 export const ClientDetail: React.FC = () => {
@@ -10,16 +16,19 @@ export const ClientDetail: React.FC = () => {
   const [client, setClient] = useState<Client | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-
-  const [displayName, setDisplayName] = useState('');
-  const [type, setType] = useState<'INDIVIDUAL' | 'BUSINESS'>('INDIVIDUAL');
-  const [pan, setPan] = useState('');
-  const [gstin, setGstin] = useState('');
-  const [cin, setCin] = useState('');
-  const [contactName, setContactName] = useState('');
-  const [contactEmail, setContactEmail] = useState('');
   const [tasks, setTasks] = useState<ComplianceTask[]>([]);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [selectedTab, setSelectedTab] = useState(0);
+
+  const [formData, setFormData] = useState({
+    displayName: '',
+    type: 'INDIVIDUAL' as 'INDIVIDUAL' | 'BUSINESS',
+    pan: '',
+    gstin: '',
+    cin: '',
+    contactName: '',
+    contactEmail: '',
+  });
 
   useEffect(() => {
     if (id) {
@@ -33,13 +42,15 @@ export const ClientDetail: React.FC = () => {
       setLoading(true);
       const data = await api.get<Client>(`/clients/${clientId}`);
       setClient(data);
-      setDisplayName(data.displayName);
-      setType(data.type);
-      setPan(data.pan || '');
-      setGstin(data.gstin || '');
-      setCin(data.cin || '');
-      setContactName(data.primaryUser?.name || '');
-      setContactEmail(data.primaryUser?.email || '');
+      setFormData({
+        displayName: data.displayName,
+        type: data.type,
+        pan: data.pan || '',
+        gstin: data.gstin || '',
+        cin: data.cin || '',
+        contactName: data.primaryUser?.name || '',
+        contactEmail: data.primaryUser?.email || '',
+      });
     } catch (error) {
       console.error('Failed to load client:', error);
       alert('Failed to load client');
@@ -61,20 +72,19 @@ export const ClientDetail: React.FC = () => {
     }
   };
 
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSave = async () => {
     if (!id) return;
 
     try {
       setSaving(true);
       const updated = await api.put<Client>(`/clients/${id}`, {
-        displayName,
-        type,
-        pan,
-        gstin,
-        cin,
-        contactName,
-        contactEmail,
+        displayName: formData.displayName,
+        type: formData.type,
+        pan: formData.pan || undefined,
+        gstin: formData.gstin || undefined,
+        cin: formData.cin || undefined,
+        contactName: formData.contactName,
+        contactEmail: formData.contactEmail,
       });
       setClient(updated);
       alert('Client updated');
@@ -104,8 +114,17 @@ export const ClientDetail: React.FC = () => {
     navigate(`/documents?clientId=${client.id}`);
   };
 
+  const statusCellRender = (data: any) => {
+    const status = data.value?.toLowerCase() || '';
+    return (
+      <span className={`status-badge status-${status}`}>
+        {data.value?.replace('_', ' ') || ''}
+      </span>
+    );
+  };
+
   if (loading) {
-    return <div className="page-loading">Loading client...</div>;
+    return <LoadPanel visible={true} />;
   }
 
   if (!client) {
@@ -113,158 +132,168 @@ export const ClientDetail: React.FC = () => {
   }
 
   return (
-    <div className="clients-page">
-      <div className="page-header">
-        <h1>Edit Client</h1>
-        <div className="page-actions">
-          <button className="secondary-button" onClick={() => navigate('/clients')}>
-            Back to Clients
-          </button>
-          <button className="secondary-button" onClick={handleOpenChat}>
-            Message
-          </button>
-          <button className="secondary-button" onClick={handleOpenDocuments}>
-            Documents
-          </button>
-        </div>
-      </div>
-
-      <form className="client-form" onSubmit={handleSave}>
-        <div className="form-grid">
-          <div className="form-field">
-            <label>Client Name</label>
-            <input
-              type="text"
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              required
+    <div className="dx-clients-page">
+      <PageHeader
+        title="Edit Client"
+        subtitle={client.displayName}
+        actions={
+          <>
+            <Button
+              text="Back to Clients"
+              stylingMode="outlined"
+              onClick={() => navigate('/clients')}
             />
-          </div>
-          <div className="form-field">
-            <label>Client Type</label>
-            <select
-              value={type}
-              onChange={(e) => setType(e.target.value as 'INDIVIDUAL' | 'BUSINESS')}
-              required
+            <Button
+              text="Message"
+              stylingMode="outlined"
+              icon="message"
+              onClick={handleOpenChat}
+            />
+            <Button
+              text="Documents"
+              stylingMode="outlined"
+              icon="file"
+              onClick={handleOpenDocuments}
+            />
+          </>
+        }
+      />
+
+      <Tabs
+        selectedIndex={selectedTab}
+        onSelectedIndexChange={setSelectedTab}
+      >
+        <Tab title="Client Information">
+          <Form formData={formData} onFieldDataChanged={(e) => {
+            if (e.dataField) {
+              setFormData((prev) => ({
+                ...prev,
+                [e.dataField]: e.value,
+              }));
+            }
+          }}>
+            <Item
+              dataField="displayName"
+              editorType="dxTextBox"
             >
-              <option value="INDIVIDUAL">Individual</option>
-              <option value="BUSINESS">Business</option>
-            </select>
-          </div>
-          <div className="form-field">
-            <label>PAN</label>
-            <input
-              type="text"
-              value={pan}
-              onChange={(e) => setPan(e.target.value)}
-            />
-          </div>
-          <div className="form-field">
-            <label>GSTIN</label>
-            <input
-              type="text"
-              value={gstin}
-              onChange={(e) => setGstin(e.target.value)}
-            />
-          </div>
-          <div className="form-field">
-            <label>CIN</label>
-            <input
-              type="text"
-              value={cin}
-              onChange={(e) => setCin(e.target.value)}
-            />
-          </div>
-          <div className="form-field">
-            <label>Contact Name</label>
-            <input
-              type="text"
-              value={contactName}
-              onChange={(e) => setContactName(e.target.value)}
-            />
-          </div>
-          <div className="form-field">
-            <label>Contact Email</label>
-            <input
-              type="email"
-              value={contactEmail}
-              onChange={(e) => setContactEmail(e.target.value)}
-            />
-          </div>
-        </div>
-        <div className="form-actions">
-          <button
-            type="button"
-            className="secondary-button"
-            onClick={() => navigate('/clients')}
-            disabled={saving}
+              <Label text="Client Name" />
+              <RequiredRule />
+            </Item>
+            <Item
+              dataField="type"
+              editorType="dxSelectBox"
+              editorOptions={{
+                items: ['INDIVIDUAL', 'BUSINESS'],
+              }}
+            >
+              <Label text="Client Type" />
+              <RequiredRule />
+            </Item>
+            <Item
+              dataField="pan"
+              editorType="dxTextBox"
+            >
+              <Label text="PAN" />
+            </Item>
+            <Item
+              dataField="gstin"
+              editorType="dxTextBox"
+            >
+              <Label text="GSTIN" />
+            </Item>
+            <Item
+              dataField="cin"
+              editorType="dxTextBox"
+            >
+              <Label text="CIN" />
+            </Item>
+            <Item
+              dataField="contactName"
+              editorType="dxTextBox"
+            >
+              <Label text="Contact Name" />
+            </Item>
+            <Item
+              dataField="contactEmail"
+              editorType="dxTextBox"
+              editorOptions={{
+                mode: 'email',
+              }}
+            >
+              <Label text="Contact Email" />
+            </Item>
+            <Item>
+              <div className="dx-form-actions">
+                <Button
+                  text="Cancel"
+                  stylingMode="outlined"
+                  onClick={() => navigate('/clients')}
+                  disabled={saving}
+                />
+                <Button
+                  text={saving ? 'Saving...' : 'Save Changes'}
+                  type="default"
+                  onClick={handleSave}
+                  disabled={saving}
+                />
+              </div>
+            </Item>
+          </Form>
+        </Tab>
+        <Tab title="Tasks">
+          <DataGrid
+            dataSource={tasks}
+            showBorders={true}
+            columnAutoWidth={true}
           >
-            Cancel
-          </button>
-          <button type="submit" className="primary-button" disabled={saving}>
-            {saving ? 'Saving...' : 'Save Changes'}
-          </button>
-        </div>
-      </form>
+            <Column
+              dataField="complianceType.displayName"
+              caption="Task"
+              cellRender={(data: any) => data.data?.complianceType?.displayName || ''}
+            />
+            <Column
+              dataField="status"
+              caption="Status"
+              cellRender={statusCellRender}
+            />
+            <Column
+              dataField="dueDate"
+              caption="Due Date"
+              dataType="date"
+              format="shortDate"
+            />
+            <FilterRow visible={true} />
+            <Paging defaultPageSize={10} />
+            <Pager showPageSizeSelector={true} />
+          </DataGrid>
+        </Tab>
+        <Tab title="Events">
+          <DataGrid
+            dataSource={events}
+            showBorders={true}
+            columnAutoWidth={true}
+          >
+            <Column dataField="title" caption="Title" />
+            <Column
+              dataField="startAt"
+              caption="Start"
+              dataType="datetime"
+              format="shortDateShortTime"
+            />
+            <Column
+              dataField="endAt"
+              caption="End"
+              dataType="datetime"
+              format="shortDateShortTime"
+            />
+            <FilterRow visible={true} />
+            <Paging defaultPageSize={10} />
+            <Pager showPageSizeSelector={true} />
+          </DataGrid>
+        </Tab>
+      </Tabs>
 
-      <div className="client-related">
-        <div className="dashboard-section" style={{ marginTop: '20px' }}>
-          <h2>Client Tasks</h2>
-          {tasks.length === 0 ? (
-            <div className="empty-state">
-              <p>No tasks for this client</p>
-            </div>
-          ) : (
-            <div className="tasks-list">
-              {tasks.map((task) => (
-                <div key={task.id} className="task-card">
-                  <div className="task-header">
-                    <h3>{task.complianceType.displayName}</h3>
-                    <span
-                      className={`status-badge status-${task.status.toLowerCase()}`}
-                    >
-                      {task.status.replace('_', ' ')}
-                    </span>
-                  </div>
-                  <p className="task-period">
-                    Period: {new Date(task.periodStart).toLocaleDateString()} -{' '}
-                    {new Date(task.periodEnd).toLocaleDateString()}
-                  </p>
-                  <p className="task-due">
-                    Due: {new Date(task.dueDate).toLocaleDateString()}
-                  </p>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div className="dashboard-section" style={{ marginTop: '20px' }}>
-          <h2>Client Events</h2>
-          {events.length === 0 ? (
-            <div className="empty-state">
-              <p>No calendar events for this client</p>
-            </div>
-          ) : (
-            <div className="notifications-list">
-              {events.map((event) => (
-                <div key={event.id} className="notification-item">
-                  <div className="notification-content">
-                    <strong>{event.title}</strong>
-                    <p>
-                      {new Date(event.startAt).toLocaleString()} -{' '}
-                      {new Date(event.endAt).toLocaleString()}
-                    </p>
-                    {event.description && <p>{event.description}</p>}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
+      <LoadPanel visible={loading} />
     </div>
   );
 };
-
-

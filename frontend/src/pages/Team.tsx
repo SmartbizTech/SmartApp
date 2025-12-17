@@ -1,6 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../api/client';
 import type { AdminUser } from '../types';
+import { DataGrid, Column, Paging, Pager, FilterRow, SearchPanel, Editing } from 'devextreme-react/data-grid';
+import { Popup } from 'devextreme-react/popup';
+import { Form, Item, Label, RequiredRule } from 'devextreme-react/form';
+import { SelectBox } from 'devextreme-react/select-box';
+import { Button } from 'devextreme-react/button';
+import { LoadPanel } from 'devextreme-react/load-panel';
+import { PageHeader } from '../components/PageHeader';
 import './Dashboard.css';
 
 export const Team: React.FC = () => {
@@ -33,13 +40,18 @@ export const Team: React.FC = () => {
     userId: string,
     updates: Partial<Pick<AdminUser, 'canViewClients' | 'canEditClients' | 'canAccessDocuments' | 'canAccessTasks' | 'canAccessCalendar' | 'canAccessChat'>>
   ) => {
-    const updated = await api.patch<AdminUser>(`/users/${userId}/permissions`, updates);
-    setStaff((prev) => prev.map((s) => (s.id === userId ? { ...s, ...updated } : s)));
-    return updated;
+    try {
+      const updated = await api.patch<AdminUser>(`/users/${userId}/permissions`, updates);
+      setStaff((prev) => prev.map((s) => (s.id === userId ? { ...s, ...updated } : s)));
+      return updated;
+    } catch (error: any) {
+      console.error('Failed to update permissions:', error);
+      alert(error?.message || 'Failed to update permissions');
+      throw error;
+    }
   };
 
-  const handleAddStaff = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleAddStaff = async () => {
     if (!name || !email || !password) {
       alert('Please fill all fields');
       return;
@@ -66,223 +78,220 @@ export const Team: React.FC = () => {
     }
   };
 
-  if (loading) {
-    return <div className="page-loading">Loading team...</div>;
-  }
+  const permissionCellRender = (data: any, field: string) => {
+    const value = data.data[field];
+    const permissionValue = value ? 'edit' : 'none';
+    return (
+      <SelectBox
+        value={permissionValue}
+        items={[
+          { value: 'none', text: 'None' },
+          { value: 'view', text: 'View' },
+          { value: 'edit', text: 'Edit' },
+        ]}
+        displayExpr="text"
+        valueExpr="value"
+        onValueChanged={async (e: any) => {
+          const newValue = e.value;
+          const updates: any = {};
+          if (field === 'canViewClients' || field === 'canEditClients') {
+            if (newValue === 'edit') {
+              updates.canViewClients = true;
+              updates.canEditClients = true;
+            } else if (newValue === 'view') {
+              updates.canViewClients = true;
+              updates.canEditClients = false;
+            } else {
+              updates.canViewClients = false;
+              updates.canEditClients = false;
+            }
+          } else {
+            updates[field] = newValue !== 'none';
+          }
+          await updatePermission(data.data.id, updates);
+        }}
+        stylingMode="outlined"
+        width="100%"
+      />
+    );
+  };
 
-  return (
-    <div className="admin-page">
-      <div className="page-header">
-        <h1>Team</h1>
-        <button className="primary-button" onClick={() => setShowAddModal(true)}>
-          Add Staff
-        </button>
-      </div>
-
-      <div className="admin-card">
-        {staff.length === 0 ? (
-          <div className="empty-state">
-            <p>No staff members yet</p>
-          </div>
-        ) : (
-          <div className="users-table-wrapper">
-            <table className="users-table">
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Email</th>
-                  <th>Role</th>
-                  <th>View Clients</th>
-                  <th>Edit Clients</th>
-                  <th>Docs</th>
-                  <th>Tasks</th>
-                  <th>Calendar</th>
-                  <th>Chat</th>
-                </tr>
-              </thead>
-              <tbody>
-                {staff.map((u) => (
-                  <tr key={u.id}>
-                    <td>{u.name}</td>
-                    <td>{u.email}</td>
-                    <td>
-                      <span className="role-badge role-ca_staff">CA_STAFF</span>
-                    </td>
-                    <td>
-                      <select
-                        value={
-                          u.canViewClients && u.canEditClients
-                            ? 'edit'
-                            : u.canViewClients
-                            ? 'view'
-                            : 'none'
-                        }
-                        onChange={async (e) => {
-                          const value = e.target.value;
-                          const prevValue =
-                            u.canViewClients && u.canEditClients
-                              ? 'edit'
-                              : u.canViewClients
-                              ? 'view'
-                              : 'none';
-                          try {
-                            const updates: Record<string, boolean> = {};
-                            if (value === 'edit') {
-                              updates.canViewClients = true;
-                              updates.canEditClients = true;
-                            } else if (value === 'view') {
-                              updates.canViewClients = true;
-                              updates.canEditClients = false;
-                            } else {
-                              updates.canViewClients = false;
-                              updates.canEditClients = false;
-                            }
-                            await updatePermission(u.id, updates);
-                          } catch (error: any) {
-                            console.error('Failed to update permissions:', error);
-                            alert(error?.message || 'Failed to update permissions');
-                            e.target.value = prevValue;
-                          }
-                        }}
-                        style={{ padding: '4px 8px', fontSize: '14px' }}
-                      >
-                        <option value="none">None</option>
-                        <option value="view">View</option>
-                        <option value="edit">Edit</option>
-                      </select>
-                    </td>
-                    <td>-</td>
-                    <td>
-                      <PermissionDropdown
-                        value={u.canAccessDocuments}
-                        onChange={async (enabled) => {
-                          await updatePermission(u.id, { canAccessDocuments: enabled });
-                        }}
-                      />
-                    </td>
-                    <td>
-                      <PermissionDropdown
-                        value={u.canAccessTasks}
-                        onChange={async (enabled) => {
-                          await updatePermission(u.id, { canAccessTasks: enabled });
-                        }}
-                      />
-                    </td>
-                    <td>
-                      <PermissionDropdown
-                        value={u.canAccessCalendar}
-                        onChange={async (enabled) => {
-                          await updatePermission(u.id, { canAccessCalendar: enabled });
-                        }}
-                      />
-                    </td>
-                    <td>
-                      <PermissionDropdown
-                        value={u.canAccessChat}
-                        onChange={async (enabled) => {
-                          await updatePermission(u.id, { canAccessChat: enabled });
-                        }}
-                      />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-
-      {showAddModal && (
-        <div className="modal-backdrop">
-          <div className="modal">
-            <h2>Add Staff Member</h2>
-            <form onSubmit={handleAddStaff} className="form-grid">
-              <div className="form-field">
-                <label>Name</label>
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="form-field">
-                <label>Email</label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="form-field" style={{ gridColumn: '1 / -1' }}>
-                <label>Password</label>
-                <div className="password-input-wrapper">
-                  <input
-                    type={passwordVisible ? 'text' : 'password'}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
-                  <button
-                    type="button"
-                    className="password-eye-button"
-                    onClick={() => setPasswordVisible((v) => !v)}
-                  >
-                    {passwordVisible ? 'Hide' : 'Show'}
-                  </button>
-                </div>
-              </div>
-              <div className="form-actions">
-                <button
-                  type="button"
-                  className="secondary-button"
-                  onClick={() => setShowAddModal(false)}
-                  disabled={submitting}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="primary-button"
-                  disabled={submitting}
-                >
-                  {submitting ? 'Adding...' : 'Add Staff'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
-
-const PermissionDropdown: React.FC<{
-  value: boolean;
-  onChange: (enabled: boolean) => Promise<void>;
-}> = ({ value, onChange }) => {
-  const handleChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newValue = e.target.value;
-    const prevValue = value ? 'edit' : 'none';
-    try {
-      await onChange(newValue !== 'none');
-    } catch (error: any) {
-      console.error('Failed to update permissions:', error);
-      alert(error?.message || 'Failed to update permissions');
-      e.target.value = prevValue;
-    }
+  const clientsPermissionCellRender = (data: any) => {
+    const canView = data.data.canViewClients;
+    const canEdit = data.data.canEditClients;
+    const value = canView && canEdit ? 'edit' : canView ? 'view' : 'none';
+    return (
+      <SelectBox
+        value={value}
+        items={[
+          { value: 'none', text: 'None' },
+          { value: 'view', text: 'View' },
+          { value: 'edit', text: 'Edit' },
+        ]}
+        displayExpr="text"
+        valueExpr="value"
+        onValueChanged={async (e: any) => {
+          const newValue = e.value;
+          const updates: any = {};
+          if (newValue === 'edit') {
+            updates.canViewClients = true;
+            updates.canEditClients = true;
+          } else if (newValue === 'view') {
+            updates.canViewClients = true;
+            updates.canEditClients = false;
+          } else {
+            updates.canViewClients = false;
+            updates.canEditClients = false;
+          }
+          await updatePermission(data.data.id, updates);
+        }}
+        stylingMode="outlined"
+        width="100%"
+      />
+    );
   };
 
   return (
-    <select
-      value={value ? 'edit' : 'none'}
-      onChange={handleChange}
-      style={{ padding: '4px 8px', fontSize: '14px' }}
-    >
-      <option value="none">None</option>
-      <option value="view">View</option>
-      <option value="edit">Edit</option>
-    </select>
+    <div className="dx-admin-page">
+      <PageHeader
+        title="Team"
+        subtitle="Manage team members and permissions"
+        actions={
+          <Button
+            text="Add Staff"
+            type="default"
+            icon="plus"
+            onClick={() => setShowAddModal(true)}
+          />
+        }
+      />
+
+      <DataGrid
+        dataSource={staff}
+        showBorders={true}
+        columnAutoWidth={true}
+        rowAlternationEnabled={true}
+        keyExpr="id"
+      >
+        <FilterRow visible={true} />
+        <SearchPanel visible={true} />
+        <Paging defaultPageSize={20} />
+        <Pager showPageSizeSelector={true} allowedPageSizes={[10, 20, 50]} />
+        <Column dataField="name" caption="Name" />
+        <Column dataField="email" caption="Email" />
+        <Column
+          dataField="role"
+          caption="Role"
+          cellRender={(data: any) => (
+            <span className="role-badge role-ca_staff">CA_STAFF</span>
+          )}
+        />
+        <Column
+          caption="View Clients"
+          cellRender={(data: any) => clientsPermissionCellRender(data)}
+          allowSorting={false}
+        />
+        <Column
+          caption="Edit Clients"
+          cellRender={() => '-'}
+        />
+        <Column
+          caption="Docs"
+          cellRender={(data: any) => permissionCellRender(data, 'canAccessDocuments')}
+          allowSorting={false}
+        />
+        <Column
+          caption="Tasks"
+          cellRender={(data: any) => permissionCellRender(data, 'canAccessTasks')}
+          allowSorting={false}
+        />
+        <Column
+          caption="Calendar"
+          cellRender={(data: any) => permissionCellRender(data, 'canAccessCalendar')}
+          allowSorting={false}
+        />
+        <Column
+          caption="Chat"
+          cellRender={(data: any) => permissionCellRender(data, 'canAccessChat')}
+          allowSorting={false}
+        />
+      </DataGrid>
+
+      <Popup
+        visible={showAddModal}
+        onHiding={() => setShowAddModal(false)}
+        showTitle={true}
+        title="Add Staff Member"
+        width={500}
+        height="auto"
+        showCloseButton={true}
+      >
+        <Form formData={{}}>
+          <Item
+            dataField="name"
+            editorType="dxTextBox"
+            editorOptions={{
+              value: name,
+              onValueChanged: (e: any) => setName(e.value),
+            }}
+          >
+            <Label text="Name" />
+            <RequiredRule />
+          </Item>
+          <Item
+            dataField="email"
+            editorType="dxTextBox"
+            editorOptions={{
+              value: email,
+              onValueChanged: (e: any) => setEmail(e.value),
+              mode: 'email',
+            }}
+          >
+            <Label text="Email" />
+            <RequiredRule />
+          </Item>
+          <Item
+            dataField="password"
+            editorType="dxTextBox"
+            editorOptions={{
+              value: password,
+              onValueChanged: (e: any) => setPassword(e.value),
+              mode: passwordVisible ? 'text' : 'password',
+              buttons: [
+                {
+                  name: 'password',
+                  location: 'after',
+                  options: {
+                    icon: passwordVisible ? 'eyeopen' : 'eyeclose',
+                    onClick: () => setPasswordVisible(!passwordVisible),
+                  },
+                },
+              ],
+            }}
+          >
+            <Label text="Password" />
+            <RequiredRule />
+          </Item>
+          <Item>
+            <div className="dx-form-actions">
+              <Button
+                text="Cancel"
+                stylingMode="outlined"
+                onClick={() => setShowAddModal(false)}
+                disabled={submitting}
+              />
+              <Button
+                text={submitting ? 'Adding...' : 'Add Staff'}
+                type="default"
+                onClick={handleAddStaff}
+                disabled={submitting}
+              />
+            </div>
+          </Item>
+        </Form>
+      </Popup>
+
+      <LoadPanel visible={loading} />
+    </div>
   );
 };

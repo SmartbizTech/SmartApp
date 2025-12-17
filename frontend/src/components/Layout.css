@@ -1,80 +1,23 @@
-.layout {
-  min-height: 100vh;
+.dx-layout {
+  height: 100vh;
   display: flex;
   flex-direction: column;
-  background: #f5f5f5;
 }
 
-.navbar {
-  background: white;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  position: sticky;
-  top: 0;
-  z-index: 100;
-}
-
-.nav-content {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 0 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 64px;
-}
-
-.nav-brand {
-  cursor: pointer;
-}
-
-.nav-brand h2 {
-  margin: 0;
-  color: #333;
-  font-size: 20px;
-  font-weight: 600;
-}
-
-.nav-links {
-  display: flex;
-  gap: 8px;
+.dx-drawer-content {
   flex: 1;
-  justify-content: center;
+  padding: 20px;
+  background: #f5f5f5;
+  overflow-y: auto;
 }
 
-.nav-link {
-  padding: 8px 16px;
-  background: none;
-  border: none;
-  color: #666;
-  font-size: 14px;
-  cursor: pointer;
-  border-radius: 4px;
-  transition: all 0.2s;
-}
-
-.nav-link:hover {
-  background: #f0f0f0;
-  color: #333;
-}
-
-.nav-link.active {
-  background: #667eea;
-  color: white;
-}
-
-.nav-user {
+.user-panel {
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
-.user-name {
-  font-size: 14px;
-  font-weight: 500;
-  color: #333;
-}
-
-.user-role {
+.user-role-badge {
   font-size: 12px;
   color: #666;
   text-transform: capitalize;
@@ -83,26 +26,50 @@
   border-radius: 4px;
 }
 
-.logout-button {
-  padding: 6px 12px;
-  background: #dc3545;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  font-size: 14px;
+.dx-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
   cursor: pointer;
-  transition: background 0.2s;
 }
 
-.logout-button:hover {
-  background: #c82333;
+.dx-menu-item:hover {
+  background: #f0f0f0;
 }
 
-.main-content {
-  flex: 1;
-  max-width: 1400px;
-  width: 100%;
-  margin: 0 auto;
-  padding: 20px;
+.dx-menu-item.dx-state-selected {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.dx-page-header {
+  margin-bottom: 24px;
+}
+
+.dx-page-header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.dx-page-title {
+  font-size: 28px;
+  font-weight: 600;
+  margin: 0 0 4px 0;
+  color: #333;
+}
+
+.dx-page-subtitle {
+  font-size: 14px;
+  color: #666;
+  margin: 0;
+}
+
+.dx-page-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
 }
 

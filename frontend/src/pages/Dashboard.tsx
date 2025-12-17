@@ -1,7 +1,12 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../api/client';
-import type { ComplianceTask, Notification, Client } from '../types';
+import type { ComplianceTask, Notification } from '../types';
+import { DataGrid, Column, Paging, Pager, FilterRow, SearchPanel } from 'devextreme-react/data-grid';
+import { Card } from 'devextreme-react/card';
+import { LoadPanel } from 'devextreme-react/load-panel';
+import { PageHeader } from '../components/PageHeader';
 import './Dashboard.css';
 
 interface DashboardStats {
@@ -18,6 +23,7 @@ interface DashboardStats {
 
 export const Dashboard: React.FC = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [stats, setStats] = useState<DashboardStats>({});
   const [recentTasks, setRecentTasks] = useState<ComplianceTask[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -41,131 +47,185 @@ export const Dashboard: React.FC = () => {
     }
   };
 
-  if (loading) {
-    return <div className="dashboard-loading">Loading dashboard...</div>;
-  }
-
   const isClient = user?.role === 'CLIENT';
 
-  return (
-    <div className="dashboard">
-      <div className="dashboard-header">
-        <h1>Welcome back, {user?.name}</h1>
-        <p>{isClient ? 'Client Dashboard' : 'CA Dashboard'}</p>
-      </div>
+  const statusCellRender = (data: any) => {
+    const status = data.value?.toLowerCase() || '';
+    const statusClass = `status-badge status-${status}`;
+    return (
+      <span className={statusClass}>
+        {data.value?.replace('_', ' ') || ''}
+      </span>
+    );
+  };
 
-      <div className="stats-grid">
+  const onTaskRowClick = (e: any) => {
+    if (e.data?.id) {
+      navigate(`/tasks`);
+    }
+  };
+
+  return (
+    <div className="dx-dashboard">
+      <PageHeader
+        title={`Welcome back, ${user?.name || 'User'}`}
+        subtitle={isClient ? 'Client Dashboard' : 'CA Dashboard'}
+      />
+
+      <div className="dx-stats-grid">
         {!isClient && (
           <>
-            <StatCard
-              title="Pending Clients"
-              value={stats.pendingClients || 0}
-              icon="👥"
-            />
-            <StatCard
-              title="Upcoming Deadlines"
-              value={stats.upcomingDeadlines || 0}
-              icon="📅"
-            />
-            <StatCard
-              title="Pending Tasks"
-              value={stats.pendingTasks || 0}
-              icon="📋"
-            />
+            <Card className="dx-stat-card">
+              <div className="stat-content">
+                <div className="stat-icon">👥</div>
+                <div>
+                  <div className="stat-value">{stats.pendingClients || 0}</div>
+                  <div className="stat-title">Pending Clients</div>
+                </div>
+              </div>
+            </Card>
+            <Card className="dx-stat-card">
+              <div className="stat-content">
+                <div className="stat-icon">📅</div>
+                <div>
+                  <div className="stat-value">{stats.upcomingDeadlines || 0}</div>
+                  <div className="stat-title">Upcoming Deadlines</div>
+                </div>
+              </div>
+            </Card>
+            <Card className="dx-stat-card">
+              <div className="stat-content">
+                <div className="stat-icon">📋</div>
+                <div>
+                  <div className="stat-value">{stats.pendingTasks || 0}</div>
+                  <div className="stat-title">Pending Tasks</div>
+                </div>
+              </div>
+            </Card>
           </>
         )}
         {isClient && (
           <>
-            <StatCard
-              title="Pending Actions"
-              value={stats.pendingTasks || 0}
-              icon="⚠️"
-            />
-            <StatCard
-              title="Uploaded Documents"
-              value={stats.uploadedDocuments || 0}
-              icon="📄"
-            />
+            <Card className="dx-stat-card">
+              <div className="stat-content">
+                <div className="stat-icon">⚠️</div>
+                <div>
+                  <div className="stat-value">{stats.pendingTasks || 0}</div>
+                  <div className="stat-title">Pending Actions</div>
+                </div>
+              </div>
+            </Card>
+            <Card className="dx-stat-card">
+              <div className="stat-content">
+                <div className="stat-icon">📄</div>
+                <div>
+                  <div className="stat-value">{stats.uploadedDocuments || 0}</div>
+                  <div className="stat-title">Uploaded Documents</div>
+                </div>
+              </div>
+            </Card>
             {stats.filingStatus && (
               <>
-                <StatCard
-                  title="In Progress"
-                  value={stats.filingStatus.inProgress || 0}
-                  icon="🔄"
-                />
-                <StatCard
-                  title="Filed"
-                  value={stats.filingStatus.filed || 0}
-                  icon="✅"
-                />
+                <Card className="dx-stat-card">
+                  <div className="stat-content">
+                    <div className="stat-icon">🔄</div>
+                    <div>
+                      <div className="stat-value">{stats.filingStatus.inProgress || 0}</div>
+                      <div className="stat-title">In Progress</div>
+                    </div>
+                  </div>
+                </Card>
+                <Card className="dx-stat-card">
+                  <div className="stat-content">
+                    <div className="stat-icon">✅</div>
+                    <div>
+                      <div className="stat-value">{stats.filingStatus.filed || 0}</div>
+                      <div className="stat-title">Filed</div>
+                    </div>
+                  </div>
+                </Card>
               </>
             )}
           </>
         )}
       </div>
 
-      <div className="dashboard-content">
-        <div className="dashboard-section">
+      <div className="dx-dashboard-content">
+        <Card className="dx-section-card">
           <h2>Recent Tasks</h2>
-          <div className="tasks-list">
-            {recentTasks.length === 0 ? (
-              <p className="empty-state">No recent tasks</p>
-            ) : (
-              recentTasks.map((task) => (
-                <div key={task.id} className="task-card">
-                  <div className="task-header">
-                    <h3>{task.complianceType.displayName}</h3>
-                    <span className={`status-badge status-${task.status.toLowerCase()}`}>
-                      {task.status}
-                    </span>
-                  </div>
-                  <p className="task-client">{task.client.displayName}</p>
-                  <p className="task-due">Due: {new Date(task.dueDate).toLocaleDateString()}</p>
-                  {task.assignedTo && (
-                    <p className="task-assigned">Assigned to: {task.assignedTo.name}</p>
-                  )}
-                </div>
-              ))
-            )}
-          </div>
-        </div>
+          <DataGrid
+            dataSource={recentTasks}
+            showBorders={true}
+            columnAutoWidth={true}
+            onRowClick={onTaskRowClick}
+            rowAlternationEnabled={true}
+          >
+            <Column
+              dataField="complianceType.displayName"
+              caption="Task"
+              cellRender={(data: any) => data.data?.complianceType?.displayName || ''}
+            />
+            <Column
+              dataField="client.displayName"
+              caption="Client"
+              cellRender={(data: any) => data.data?.client?.displayName || ''}
+            />
+            <Column
+              dataField="status"
+              caption="Status"
+              cellRender={statusCellRender}
+            />
+            <Column
+              dataField="dueDate"
+              caption="Due Date"
+              dataType="date"
+              format="shortDate"
+            />
+            <Column
+              dataField="assignedTo.name"
+              caption="Assigned To"
+              cellRender={(data: any) => data.data?.assignedTo?.name || '-'}
+            />
+            <FilterRow visible={true} />
+            <SearchPanel visible={true} />
+            <Paging defaultPageSize={10} />
+            <Pager showPageSizeSelector={true} allowedPageSizes={[5, 10, 20]} />
+          </DataGrid>
+        </Card>
 
-        <div className="dashboard-section">
+        <Card className="dx-section-card">
           <h2>Notifications</h2>
-          <div className="notifications-list">
-            {notifications.length === 0 ? (
-              <p className="empty-state">No notifications</p>
-            ) : (
-              notifications.slice(0, 5).map((notification) => (
-                <div
-                  key={notification.id}
-                  className={`notification-item ${!notification.readAt ? 'unread' : ''}`}
-                >
-                  <div className="notification-content">
-                    <strong>{notification.type.replace('_', ' ')}</strong>
-                    <p>{new Date(notification.createdAt).toLocaleString()}</p>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
+          <DataGrid
+            dataSource={notifications}
+            showBorders={true}
+            columnAutoWidth={true}
+            rowAlternationEnabled={true}
+          >
+            <Column
+              dataField="type"
+              caption="Type"
+              cellRender={(data: any) => data.value?.replace('_', ' ') || ''}
+            />
+            <Column
+              dataField="createdAt"
+              caption="Date"
+              dataType="datetime"
+              format="shortDateShortTime"
+            />
+            <Column
+              dataField="readAt"
+              caption="Read"
+              cellRender={(data: any) => data.value ? '✓' : '✗'}
+            />
+            <FilterRow visible={true} />
+            <SearchPanel visible={true} />
+            <Paging defaultPageSize={10} />
+            <Pager showPageSizeSelector={true} allowedPageSizes={[5, 10, 20]} />
+          </DataGrid>
+        </Card>
       </div>
+
+      <LoadPanel visible={loading} />
     </div>
   );
 };
-
-const StatCard: React.FC<{ title: string; value: number; icon: string }> = ({
-  title,
-  value,
-  icon,
-}) => (
-  <div className="stat-card">
-    <div className="stat-icon">{icon}</div>
-    <div className="stat-content">
-      <div className="stat-value">{value}</div>
-      <div className="stat-title">{title}</div>
-    </div>
-  </div>
-);
-

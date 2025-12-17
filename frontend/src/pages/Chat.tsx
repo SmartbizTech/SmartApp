@@ -1,7 +1,17 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { api } from '../api/client';
 import type { Document, DocumentFolder } from '../types';
+import { List } from 'devextreme-react/list';
+import { ScrollView } from 'devextreme-react/scroll-view';
+import { Popup } from 'devextreme-react/popup';
+import { Tabs, Tab } from 'devextreme-react/tabs';
+import { DataGrid, Column, Paging, Pager } from 'devextreme-react/data-grid';
+import { FileUploader } from 'devextreme-react/file-uploader';
+import { TextArea } from 'devextreme-react/text-area';
+import { Button } from 'devextreme-react/button';
+import { LoadPanel } from 'devextreme-react/load-panel';
+import { PageHeader } from '../components/PageHeader';
 import './Chat.css';
 
 interface Conversation {
@@ -37,6 +47,7 @@ export const Chat: React.FC = () => {
   const [uploadFolderName, setUploadFolderName] = useState('');
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     loadConversations();
@@ -47,6 +58,14 @@ export const Chat: React.FC = () => {
       loadMessages(selectedConversation);
     }
   }, [selectedConversation]);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
 
   const loadConversations = async () => {
     try {
@@ -84,6 +103,7 @@ export const Chat: React.FC = () => {
       });
       setMessageText('');
       loadMessages(selectedConversation);
+      loadConversations();
     } catch (error) {
       console.error('Failed to send message:', error);
       alert('Failed to send message');
@@ -122,8 +142,7 @@ export const Chat: React.FC = () => {
     }
   };
 
-  const handleUploadSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleUploadSubmit = async () => {
     if (!selectedConversation) return;
     const conv = conversations.find((c) => c.id === selectedConversation);
     if (!conv) return;
@@ -136,7 +155,6 @@ export const Chat: React.FC = () => {
     try {
       setUploading(true);
 
-      // Create folder for this client/year if needed
       const folder = await api.post<DocumentFolder>('/documents/folders', {
         clientId: conv.clientId,
         financialYear: uploadFinancialYear,
@@ -150,16 +168,13 @@ export const Chat: React.FC = () => {
 
       const uploadedDoc = await api.upload<Document>('/documents', formData);
 
-      // Send message with the uploaded document
       await api.post(`/chat/conversations/${selectedConversation}/messages`, {
         body: `Attached document: ${uploadedDoc.fileName} (ID: ${uploadedDoc.id})`,
       });
 
-      // Refresh existing documents list
       const docs = await api.get<Document[]>(`/documents?clientId=${conv.clientId}`);
       setAttachDocuments(docs);
 
-      // Reset form
       setUploadFinancialYear('');
       setUploadFolderName('');
       setUploadFile(null);
@@ -174,195 +189,183 @@ export const Chat: React.FC = () => {
     }
   };
 
+  const conversationItemRender = (item: Conversation) => {
+    return (
+      <div className={`dx-conversation-item ${selectedConversation === item.id ? 'active' : ''}`}>
+        <div className="dx-conversation-info">
+          <h3>{item.clientName}</h3>
+          {item.lastMessage && (
+            <p className="dx-last-message">{item.lastMessage}</p>
+          )}
+        </div>
+        {item.unreadCount && item.unreadCount > 0 && (
+          <span className="dx-unread-badge">{item.unreadCount}</span>
+        )}
+      </div>
+    );
+  };
+
   if (loading) {
-    return <div className="page-loading">Loading conversations...</div>;
+    return <LoadPanel visible={true} />;
   }
 
   return (
-    <div className="chat-page">
-      <div className="chat-container">
-        <div className="conversations-sidebar">
-          <div className="conversations-header">
+    <div className="dx-chat-page">
+      <PageHeader title="Messages" subtitle="Chat with clients" />
+      <div className="dx-chat-container">
+        <div className="dx-conversations-sidebar">
+          <div className="dx-conversations-header">
             <h2>Conversations</h2>
           </div>
-          <div className="conversations-list">
-            {conversations.length === 0 ? (
-              <div className="empty-state">
-                <p>No conversations</p>
-              </div>
-            ) : (
-              conversations.map((conv) => (
-                <div
-                  key={conv.id}
-                  className={`conversation-item ${
-                    selectedConversation === conv.id ? 'active' : ''
-                  }`}
-                  onClick={() => setSelectedConversation(conv.id)}
-                >
-                  <div className="conversation-info">
-                    <h3>{conv.clientName}</h3>
-                    {conv.lastMessage && (
-                      <p className="last-message">{conv.lastMessage}</p>
-                    )}
-                  </div>
-                  {conv.unreadCount && conv.unreadCount > 0 && (
-                    <span className="unread-badge">{conv.unreadCount}</span>
-                  )}
-                </div>
-              ))
-            )}
-          </div>
+          <List
+            dataSource={conversations}
+            itemRender={conversationItemRender}
+            onItemClick={(e: any) => setSelectedConversation(e.itemData.id)}
+          />
         </div>
 
-        <div className="chat-main">
+        <div className="dx-chat-main">
           {selectedConversation ? (
             <>
-              <div className="messages-container">
+              <ScrollView className="dx-messages-container" height="calc(100vh - 300px)">
                 {messages.map((msg) => (
-                  <div key={msg.id} className={`message ${msg.read ? 'read' : 'unread'}`}>
-                    <div className="message-header">
+                  <div key={msg.id} className={`dx-message ${msg.read ? 'read' : 'unread'}`}>
+                    <div className="dx-message-header">
                       <strong>{msg.senderName}</strong>
-                      <span className="message-time">
+                      <span className="dx-message-time">
                         {new Date(msg.createdAt).toLocaleString()}
                       </span>
                     </div>
-                    <div className="message-body">{msg.body}</div>
+                    <div className="dx-message-body">{msg.body}</div>
                   </div>
                 ))}
-              </div>
-              <div className="message-input">
-                <textarea
+                <div ref={messagesEndRef} />
+              </ScrollView>
+              <div className="dx-message-input">
+                <TextArea
                   value={messageText}
-                  onChange={(e) => setMessageText(e.target.value)}
+                  onValueChanged={(e) => setMessageText(e.value)}
                   placeholder="Type your message..."
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
+                  height={80}
+                  onKeyDown={(e: any) => {
+                    if (e.event.key === 'Enter' && !e.event.shiftKey) {
+                      e.event.preventDefault();
                       sendMessage();
                     }
                   }}
                 />
-                <button
-                  className="attach-button"
-                  onClick={openAttachModal}
-                  aria-label="Attach Document"
-                  title="Attach Document"
-                >
-                  <span className="icon-paperclip">📎</span>
-                </button>
-                <button
-                  className="send-button-icon"
-                  onClick={sendMessage}
-                  aria-label="Send Message"
-                  title="Send Message"
-                  disabled={!messageText.trim()}
-                >
-                  <span className="icon-paper-plane">✈️</span>
-                </button>
+                <div className="dx-message-actions">
+                  <Button
+                    icon="attach"
+                    stylingMode="text"
+                    onClick={openAttachModal}
+                    hint="Attach Document"
+                  />
+                  <Button
+                    text="Send"
+                    type="default"
+                    icon="send"
+                    onClick={sendMessage}
+                    disabled={!messageText.trim()}
+                  />
+                </div>
               </div>
             </>
           ) : (
-            <div className="chat-placeholder">
+            <div className="dx-chat-placeholder">
               <p>Select a conversation to start messaging</p>
             </div>
           )}
         </div>
       </div>
-      {showAttachModal && (
-        <div className="modal-backdrop">
-          <div className="modal">
-            <h2>Attach Document</h2>
-            <div className="attach-modal-tabs">
-              <button
-                type="button"
-                className={`attach-tab ${attachMode === 'existing' ? 'active' : ''}`}
-                onClick={() => setAttachMode('existing')}
-              >
-                From Existing
-              </button>
-              <button
-                type="button"
-                className={`attach-tab ${attachMode === 'upload' ? 'active' : ''}`}
-                onClick={() => setAttachMode('upload')}
-              >
-                Upload New
-              </button>
-            </div>
-            {attachMode === 'existing' ? (
-              <>
-                {attachLoading ? (
-                  <div className="page-loading">Loading documents...</div>
-                ) : attachDocuments.length === 0 ? (
-                  <div className="empty-state">
-                    <p>No documents available for this client</p>
-                  </div>
-                ) : (
-                  <div className="documents-list">
-                    <table className="documents-table">
-                      <thead>
-                        <tr>
-                          <th>File Name</th>
-                          <th>Status</th>
-                          <th>Uploaded</th>
-                          <th>Action</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {attachDocuments.map((doc) => (
-                          <tr key={doc.id}>
-                            <td>{doc.fileName}</td>
-                            <td>{doc.status}</td>
-                            <td>{new Date(doc.uploadedAt).toLocaleDateString()}</td>
-                            <td>
-                              <button
-                                className="primary-button"
-                                type="button"
-                                onClick={() => attachDocument(doc.id, doc.fileName)}
-                              >
-                                Attach
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </>
+
+      <Popup
+        visible={showAttachModal}
+        onHiding={() => setShowAttachModal(false)}
+        showTitle={true}
+        title="Attach Document"
+        width={800}
+        height={600}
+        showCloseButton={true}
+      >
+        <Tabs selectedIndex={attachMode === 'existing' ? 0 : 1} onSelectedIndexChange={(index) => setAttachMode(index === 0 ? 'existing' : 'upload')}>
+          <Tab title="From Existing">
+            {attachLoading ? (
+              <LoadPanel visible={true} />
+            ) : attachDocuments.length === 0 ? (
+              <div className="dx-empty-state">
+                <p>No documents available for this client</p>
+              </div>
             ) : (
-              <form className="upload-form" onSubmit={handleUploadSubmit}>
-                <div className="form-field">
-                  <label>Financial Year</label>
-                  <input
-                    type="text"
-                    value={uploadFinancialYear}
-                    onChange={(e) => setUploadFinancialYear(e.target.value)}
-                    placeholder="e.g., 2024-25"
-                    required
-                  />
-                </div>
-                <div className="form-field">
-                  <label>Folder Name</label>
-                  <input
-                    type="text"
-                    value={uploadFolderName}
-                    onChange={(e) => setUploadFolderName(e.target.value)}
-                    placeholder="e.g., Tax Returns"
-                    required
-                  />
-                </div>
-                <div className="form-field">
-                  <label>File</label>
-                  <input
-                    type="file"
-                    onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
-                    required
-                  />
-                </div>
-                <div className="form-actions">
-                  <button
-                    type="button"
-                    className="secondary-button"
+              <DataGrid
+                dataSource={attachDocuments}
+                showBorders={true}
+                onRowClick={(e: any) => {
+                  if (e.data) {
+                    attachDocument(e.data.id, e.data.fileName);
+                  }
+                }}
+              >
+                <Column dataField="fileName" caption="File Name" />
+                <Column dataField="status" caption="Status" />
+                <Column
+                  dataField="uploadedAt"
+                  caption="Uploaded"
+                  dataType="date"
+                  format="shortDate"
+                />
+                <Paging defaultPageSize={10} />
+                <Pager showPageSizeSelector={true} />
+              </DataGrid>
+            )}
+          </Tab>
+          <Tab title="Upload New">
+            <Form formData={{}}>
+              <Item
+                dataField="financialYear"
+                editorType="dxTextBox"
+                editorOptions={{
+                  value: uploadFinancialYear,
+                  onValueChanged: (e: any) => setUploadFinancialYear(e.value),
+                  placeholder: 'e.g., 2024-25',
+                }}
+              >
+                <Label text="Financial Year" />
+                <RequiredRule />
+              </Item>
+              <Item
+                dataField="folderName"
+                editorType="dxTextBox"
+                editorOptions={{
+                  value: uploadFolderName,
+                  onValueChanged: (e: any) => setUploadFolderName(e.value),
+                  placeholder: 'e.g., Tax Returns',
+                }}
+              >
+                <Label text="Folder Name" />
+                <RequiredRule />
+              </Item>
+              <Item
+                dataField="file"
+                editorType="dxFileUploader"
+                editorOptions={{
+                  accept: '*',
+                  uploadMode: 'useForm',
+                  onValueChanged: (e: any) => {
+                    if (e.value && e.value.length > 0) {
+                      setUploadFile(e.value[0]);
+                    }
+                  },
+                }}
+              >
+                <Label text="File" />
+                <RequiredRule />
+              </Item>
+              <Item>
+                <div className="dx-form-actions">
+                  <Button
+                    text="Cancel"
+                    stylingMode="outlined"
                     onClick={() => {
                       setShowAttachModal(false);
                       setUploadFinancialYear('');
@@ -370,34 +373,19 @@ export const Chat: React.FC = () => {
                       setUploadFile(null);
                     }}
                     disabled={uploading}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="primary-button"
+                  />
+                  <Button
+                    text={uploading ? 'Uploading...' : 'Upload & Attach'}
+                    type="default"
+                    onClick={handleUploadSubmit}
                     disabled={uploading || !uploadFile || !uploadFinancialYear || !uploadFolderName}
-                  >
-                    {uploading ? 'Uploading...' : 'Upload & Attach'}
-                  </button>
+                  />
                 </div>
-              </form>
-            )}
-            {attachMode === 'existing' && (
-              <div className="form-actions">
-                <button
-                  type="button"
-                  className="secondary-button"
-                  onClick={() => setShowAttachModal(false)}
-                >
-                  Close
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+              </Item>
+            </Form>
+          </Tab>
+        </Tabs>
+      </Popup>
     </div>
   );
 };
-

@@ -15,6 +15,8 @@ import { Calendar } from "./pages/Calendar";
 import { Chat } from "./pages/Chat";
 import { Admin } from "./pages/Admin";
 import { Team } from "./pages/Team";
+import { Profile } from "./pages/Profile";
+import { Unauthorized } from "./pages/Unauthorized";
 
 const AppRoutes: React.FC = () => {
   const { isAuthenticated, loading, user } = useAuth();
@@ -152,6 +154,17 @@ const AppRoutes: React.FC = () => {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/profile"
+        element={
+          <ProtectedRoute allowedRoles={["CA_ADMIN", "CA_STAFF", "CLIENT"]}>
+            <Layout>
+              <Profile />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route path="/unauthorized" element={<Unauthorized />} />
       <Route
         path="/"
         element={

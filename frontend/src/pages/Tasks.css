@@ -1,6 +1,13 @@
-.tasks-page {
-  max-width: 1200px;
+.dx-tasks-page {
+  max-width: 1400px;
   margin: 0 auto;
+}
+
+.dx-form-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 16px;
 }
 
 .tasks-filters {

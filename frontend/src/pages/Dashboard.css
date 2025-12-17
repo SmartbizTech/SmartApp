@@ -1,44 +1,23 @@
-.dashboard {
-  max-width: 1200px;
+.dx-dashboard {
+  max-width: 1400px;
   margin: 0 auto;
 }
 
-.dashboard-loading {
-  text-align: center;
-  padding: 40px;
-  color: #666;
-}
-
-.dashboard-header {
-  margin-bottom: 30px;
-}
-
-.dashboard-header h1 {
-  font-size: 32px;
-  color: #333;
-  margin-bottom: 8px;
-}
-
-.dashboard-header p {
-  font-size: 16px;
-  color: #666;
-}
-
-.stats-grid {
+.dx-stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 20px;
-  margin-bottom: 30px;
+  margin-bottom: 24px;
 }
 
-.stat-card {
-  background: white;
-  border-radius: 8px;
-  padding: 24px;
+.dx-stat-card {
+  padding: 20px;
+}
+
+.stat-content {
   display: flex;
   align-items: center;
   gap: 16px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .stat-icon {
@@ -61,22 +40,18 @@
   color: #666;
 }
 
-.dashboard-content {
+.dx-dashboard-content {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 20px;
 }
 
-.dashboard-section {
-  background: white;
-  border-radius: 8px;
-  padding: 24px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+.dx-section-card {
+  padding: 20px;
 }
 
-.dashboard-section h2 {
+.dx-section-card h2 {
   font-size: 20px;
-  color: #333;
   margin-bottom: 16px;
   padding-bottom: 12px;
   border-bottom: 2px solid #f0f0f0;
@@ -193,8 +168,8 @@
 }
 
 /* Admin panel styles */
-.admin-page {
-  max-width: 1200px;
+.dx-admin-page {
+  max-width: 1400px;
   margin: 0 auto;
 }
 

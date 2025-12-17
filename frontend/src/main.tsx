@@ -3,6 +3,9 @@ import ReactDOM from 'react-dom/client'
 import App from './App.tsx'
 import './style.css'
 
+// DevExtreme theme - Material Blue Light
+import 'devextreme/dist/css/dx.material.blue.light.css'
+
 console.log('main.tsx loaded');
 
 // Add a fallback message in case React fails to render

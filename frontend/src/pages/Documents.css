@@ -1,21 +1,45 @@
-.documents-page {
-  max-width: 1200px;
+.dx-documents-page {
+  max-width: 1400px;
   margin: 0 auto;
 }
 
-.documents-content {
+.dx-documents-layout {
   display: grid;
-  grid-template-columns: 280px 1fr;
+  grid-template-columns: 300px 1fr;
   gap: 24px;
+}
+
+.dx-documents-sidebar {
   background: white;
   border-radius: 8px;
-  padding: 24px;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  height: fit-content;
+}
+
+.dx-filters-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.dx-folders-section h3 {
+  font-size: 16px;
+  margin-bottom: 12px;
+  color: #333;
+}
+
+.dx-documents-main {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.documents-sidebar {
-  border-right: 1px solid #e0e0e0;
-  padding-right: 24px;
+.dx-document-actions {
+  display: flex;
+  gap: 8px;
 }
 
 .filters-section {
