@@ -3,7 +3,6 @@ import type { ReactNode } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import Drawer from "devextreme-react/drawer";
-import List from "devextreme-react/list";
 import { UserPanel } from "./UserPanel";
 import "./Layout.css";
 
@@ -48,24 +47,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     return items;
   };
 
-  const menuItems = getNavItems();
-
-  const onMenuItemClick = (e: any) => {
-    if (e?.itemData?.id) {
-      navigate(e.itemData.id);
-      setDrawerOpen(false);
-    }
-  };
-
-  const menuItemRender = (item: any) => {
-    const active = isActive(item.id);
-    return (
-      <div className={`dx-menu-item ${active ? "dx-state-selected" : ""}`}>
-        <i className={`dx-icon dx-icon-${item.icon}`}></i>
-        <span>{item.text}</span>
-      </div>
-    );
-  };
+  const menuItems = getNavItems() || [];
 
   return (
     <div className="dx-layout">
@@ -97,11 +79,22 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         closeOnOutsideClick={true}
         onOpenedChange={setDrawerOpen}
         render={() => (
-          <List
-            dataSource={menuItems}
-            onItemClick={onMenuItemClick}
-            itemRender={menuItemRender}
-          />
+          <nav className="side-nav">
+            {menuItems.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                className={`side-nav-item ${isActive(item.id) ? "active" : ""}`}
+                onClick={() => {
+                  navigate(item.id);
+                  setDrawerOpen(false);
+                }}
+              >
+                <span className={`dx-icon dx-icon-${item.icon}`} />
+                <span>{item.text}</span>
+              </button>
+            ))}
+          </nav>
         )}
       >
         <div className="dx-drawer-content">{children}</div>

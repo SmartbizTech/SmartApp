@@ -38,6 +38,36 @@
   overflow-y: auto;
 }
 
+.side-nav {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 0;
+  background: #ffffff;
+  height: 100%;
+}
+
+.side-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.side-nav-item:hover {
+  background: #f0f0f0;
+}
+
+.side-nav-item.active {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
 .user-panel {
   display: flex;
   align-items: center;
