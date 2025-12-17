@@ -12,24 +12,9 @@ export const UserPanel: React.FC<UserPanelProps> = ({ user, onLogout }) => {
   const navigate = useNavigate();
 
   const menuItems = [
-    {
-      text: 'Profile',
-      icon: 'user',
-      onClick: () => navigate('/profile'),
-    },
-    {
-      text: 'Settings',
-      icon: 'preferences',
-      onClick: () => {
-        // Future: navigate to settings
-        console.log('Settings clicked');
-      },
-    },
-    {
-      text: 'Logout',
-      icon: 'export',
-      onClick: onLogout,
-    },
+    { text: 'Profile', icon: 'user' },
+    { text: 'Settings', icon: 'preferences' },
+    { text: 'Logout', icon: 'export' },
   ];
 
   return (
@@ -42,6 +27,17 @@ export const UserPanel: React.FC<UserPanelProps> = ({ user, onLogout }) => {
         showArrowIcon={true}
         dropDownOptions={{ width: 200 }}
         stylingMode="text"
+        onItemClick={(e) => {
+          const item = e.itemData as { text: string };
+          if (item.text === 'Profile') {
+            navigate('/profile');
+          } else if (item.text === 'Logout') {
+            onLogout();
+          } else if (item.text === 'Settings') {
+            // Future: navigate to settings page
+            console.log('Settings clicked');
+          }
+        }}
       />
       <span className="user-role-badge">{user?.role?.replace('_', ' ')}</span>
     </div>

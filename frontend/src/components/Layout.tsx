@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
-import type { ReactNode } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import Toolbar, { Item } from 'devextreme-react/toolbar';
-import Drawer from 'devextreme-react/drawer';
-import List from 'devextreme-react/list';
-import { Button } from 'devextreme-react/button';
-import { UserPanel } from './UserPanel';
-import './Layout.css';
+import React, { useState } from "react";
+import type { ReactNode } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import Toolbar, { Item } from "devextreme-react/toolbar";
+import Drawer from "devextreme-react/drawer";
+import List from "devextreme-react/list";
+import { Button } from "devextreme-react/button";
+import { UserPanel } from "./UserPanel";
+import "./Layout.css";
 
 interface LayoutProps {
   children: ReactNode;
@@ -22,31 +22,29 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const isActive = (path: string) => location.pathname.startsWith(path);
 
   const getNavItems = () => {
-    if (user?.role === 'SUPER_ADMIN') {
-      return [
-        { id: '/admin', text: 'Admin', icon: 'admin' },
-      ];
+    if (user?.role === "SUPER_ADMIN") {
+      return [{ id: "/admin", text: "Admin", icon: "admin" }];
     }
 
-    if (user?.role === 'CLIENT') {
+    if (user?.role === "CLIENT") {
       return [
-        { id: '/dashboard', text: 'Dashboard', icon: 'home' },
-        { id: '/documents', text: 'Documents', icon: 'file' },
-        { id: '/tasks', text: 'Tasks', icon: 'checklist' },
-        { id: '/calendar', text: 'Calendar', icon: 'event' },
-        { id: '/chat', text: 'Messages', icon: 'message' },
+        { id: "/dashboard", text: "Dashboard", icon: "home" },
+        { id: "/documents", text: "Documents", icon: "file" },
+        { id: "/tasks", text: "Tasks", icon: "checklist" },
+        { id: "/calendar", text: "Calendar", icon: "event" },
+        { id: "/chat", text: "Messages", icon: "message" },
       ];
     } else {
       const items = [
-        { id: '/dashboard', text: 'Dashboard', icon: 'home' },
-        { id: '/clients', text: 'Clients', icon: 'group' },
-        { id: '/documents', text: 'Documents', icon: 'file' },
-        { id: '/tasks', text: 'Tasks', icon: 'checklist' },
-        { id: '/calendar', text: 'Calendar', icon: 'event' },
-        { id: '/chat', text: 'Messages', icon: 'message' },
+        { id: "/dashboard", text: "Dashboard", icon: "home" },
+        { id: "/clients", text: "Clients", icon: "group" },
+        { id: "/documents", text: "Documents", icon: "file" },
+        { id: "/tasks", text: "Tasks", icon: "checklist" },
+        { id: "/calendar", text: "Calendar", icon: "event" },
+        { id: "/chat", text: "Messages", icon: "message" },
       ];
-      if (user?.role === 'CA_ADMIN') {
-        items.splice(2, 0, { id: '/team', text: 'Team', icon: 'user' });
+      if (user?.role === "CA_ADMIN") {
+        items.splice(2, 0, { id: "/team", text: "Team", icon: "user" });
       }
       return items;
     }
@@ -62,7 +60,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const menuItemRender = (item: any) => {
     const active = isActive(item.id);
     return (
-      <div className={`dx-menu-item ${active ? 'dx-state-selected' : ''}`}>
+      <div className={`dx-menu-item ${active ? "dx-state-selected" : ""}`}>
         <i className={`dx-icon dx-icon-${item.icon}`}></i>
         <span>{item.text}</span>
       </div>
@@ -71,26 +69,27 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   const toolbarItems = [
     {
-      widget: 'dxButton',
-      location: 'before',
+      widget: "dxButton",
+      location: "before",
       options: {
-        icon: 'menu',
+        icon: "menu",
         onClick: () => setDrawerOpen(!drawerOpen),
-        stylingMode: 'text',
+        stylingMode: "text",
       },
     },
     {
-      widget: 'dxButton',
-      location: 'before',
+      widget: "dxButton",
+      location: "before",
       options: {
-        text: 'CA Portal',
-        stylingMode: 'text',
-        onClick: () => navigate(user?.role === 'SUPER_ADMIN' ? '/admin' : '/dashboard'),
+        text: "CA Portal",
+        stylingMode: "text",
+        onClick: () =>
+          navigate(user?.role === "SUPER_ADMIN" ? "/admin" : "/dashboard"),
       },
     },
     {
-      location: 'after',
-      template: 'userPanel',
+      location: "after",
+      template: "userPanel",
     },
   ];
 
@@ -110,16 +109,15 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         height="100%"
         closeOnOutsideClick={true}
         onOpenedChange={setDrawerOpen}
-        template="menu"
+        render={() => (
+          <List
+            dataSource={menuItems}
+            onItemClick={onMenuItemClick}
+            itemRender={menuItemRender}
+          />
+        )}
       >
-        <div className="dx-drawer-content">
-          {children}
-        </div>
-        <List
-          dataSource={menuItems}
-          onItemClick={onMenuItemClick}
-          itemRender={menuItemRender}
-        />
+        <div className="dx-drawer-content">{children}</div>
       </Drawer>
     </div>
   );
