@@ -4,7 +4,6 @@ import { useAuth } from '../context/AuthContext';
 import { api } from '../api/client';
 import type { ComplianceTask, Notification } from '../types';
 import { DataGrid, Column, Paging, Pager, FilterRow, SearchPanel } from 'devextreme-react/data-grid';
-import { Card } from 'devextreme-react/card';
 import { LoadPanel } from 'devextreme-react/load-panel';
 import { PageHeader } from '../components/PageHeader';
 import './Dashboard.css';
@@ -75,7 +74,7 @@ export const Dashboard: React.FC = () => {
       <div className="dx-stats-grid">
         {!isClient && (
           <>
-            <Card className="dx-stat-card">
+            <div className="dx-stat-card">
               <div className="stat-content">
                 <div className="stat-icon">👥</div>
                 <div>
@@ -83,8 +82,8 @@ export const Dashboard: React.FC = () => {
                   <div className="stat-title">Pending Clients</div>
                 </div>
               </div>
-            </Card>
-            <Card className="dx-stat-card">
+            </div>
+            <div className="dx-stat-card">
               <div className="stat-content">
                 <div className="stat-icon">📅</div>
                 <div>
@@ -92,8 +91,8 @@ export const Dashboard: React.FC = () => {
                   <div className="stat-title">Upcoming Deadlines</div>
                 </div>
               </div>
-            </Card>
-            <Card className="dx-stat-card">
+            </div>
+            <div className="dx-stat-card">
               <div className="stat-content">
                 <div className="stat-icon">📋</div>
                 <div>
@@ -101,12 +100,12 @@ export const Dashboard: React.FC = () => {
                   <div className="stat-title">Pending Tasks</div>
                 </div>
               </div>
-            </Card>
+            </div>
           </>
         )}
         {isClient && (
           <>
-            <Card className="dx-stat-card">
+            <div className="dx-stat-card">
               <div className="stat-content">
                 <div className="stat-icon">⚠️</div>
                 <div>
@@ -114,8 +113,8 @@ export const Dashboard: React.FC = () => {
                   <div className="stat-title">Pending Actions</div>
                 </div>
               </div>
-            </Card>
-            <Card className="dx-stat-card">
+            </div>
+            <div className="dx-stat-card">
               <div className="stat-content">
                 <div className="stat-icon">📄</div>
                 <div>
@@ -123,10 +122,10 @@ export const Dashboard: React.FC = () => {
                   <div className="stat-title">Uploaded Documents</div>
                 </div>
               </div>
-            </Card>
+            </div>
             {stats.filingStatus && (
               <>
-                <Card className="dx-stat-card">
+                <div className="dx-stat-card">
                   <div className="stat-content">
                     <div className="stat-icon">🔄</div>
                     <div>
@@ -134,8 +133,8 @@ export const Dashboard: React.FC = () => {
                       <div className="stat-title">In Progress</div>
                     </div>
                   </div>
-                </Card>
-                <Card className="dx-stat-card">
+                </div>
+                <div className="dx-stat-card">
                   <div className="stat-content">
                     <div className="stat-icon">✅</div>
                     <div>
@@ -143,7 +142,7 @@ export const Dashboard: React.FC = () => {
                       <div className="stat-title">Filed</div>
                     </div>
                   </div>
-                </Card>
+                </div>
               </>
             )}
           </>
@@ -151,7 +150,7 @@ export const Dashboard: React.FC = () => {
       </div>
 
       <div className="dx-dashboard-content">
-        <Card className="dx-section-card">
+        <div className="dx-section-card">
           <h2>Recent Tasks</h2>
           <DataGrid
             dataSource={recentTasks}
@@ -191,9 +190,9 @@ export const Dashboard: React.FC = () => {
             <Paging defaultPageSize={10} />
             <Pager showPageSizeSelector={true} allowedPageSizes={[5, 10, 20]} />
           </DataGrid>
-        </Card>
+        </div>
 
-        <Card className="dx-section-card">
+        <div className="dx-section-card">
           <h2>Notifications</h2>
           <DataGrid
             dataSource={notifications}
@@ -222,7 +221,7 @@ export const Dashboard: React.FC = () => {
             <Paging defaultPageSize={10} />
             <Pager showPageSizeSelector={true} allowedPageSizes={[5, 10, 20]} />
           </DataGrid>
-        </Card>
+        </div>
       </div>
 
       <LoadPanel visible={loading} />

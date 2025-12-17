@@ -2,7 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import type { CalendarEvent, Client } from '../types';
-import Scheduler, { Resource, View, Appointment } from 'devextreme-react/scheduler';
+import Scheduler, { Resource, View } from 'devextreme-react/scheduler';
 import { Popup } from 'devextreme-react/popup';
 import { Form, Item, Label, RequiredRule } from 'devextreme-react/form';
 import { TextBox } from 'devextreme-react/text-box';

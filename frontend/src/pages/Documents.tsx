@@ -387,19 +387,21 @@ export const Documents: React.FC = () => {
             <RequiredRule />
           </Item>
           <Item
-            dataField="file"
-            editorType="dxFileUploader"
-            editorOptions={{
-              accept: '*',
-              uploadMode: 'useForm',
-              onValueChanged: (e: any) => {
-                if (e.value && e.value.length > 0) {
-                  setUploadFile(e.value[0]);
-                }
-              },
-            }}
+            render={() => (
+              <>
+                <Label text="File" />
+                <FileUploader
+                  accept="*"
+                  uploadMode="useForm"
+                  onValueChanged={(e: any) => {
+                    if (e.value && e.value.length > 0) {
+                      setUploadFile(e.value[0]);
+                    }
+                  }}
+                />
+              </>
+            )}
           >
-            <Label text="File" />
             <RequiredRule />
           </Item>
           <Item>

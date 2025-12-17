@@ -5,13 +5,14 @@ import type { Document, DocumentFolder } from '../types';
 import { List } from 'devextreme-react/list';
 import { ScrollView } from 'devextreme-react/scroll-view';
 import { Popup } from 'devextreme-react/popup';
-import { Tabs, Tab } from 'devextreme-react/tabs';
+import Tabs from 'devextreme-react/tabs';
 import { DataGrid, Column, Paging, Pager } from 'devextreme-react/data-grid';
 import { FileUploader } from 'devextreme-react/file-uploader';
 import { TextArea } from 'devextreme-react/text-area';
 import { Button } from 'devextreme-react/button';
 import { LoadPanel } from 'devextreme-react/load-panel';
 import { PageHeader } from '../components/PageHeader';
+import { Form, Item, Label, RequiredRule } from 'devextreme-react/form';
 import './Chat.css';
 
 interface Conversation {
@@ -288,8 +289,18 @@ export const Chat: React.FC = () => {
         height={600}
         showCloseButton={true}
       >
-        <Tabs selectedIndex={attachMode === 'existing' ? 0 : 1} onSelectedIndexChange={(index) => setAttachMode(index === 0 ? 'existing' : 'upload')}>
-          <Tab title="From Existing">
+        <Tabs
+          selectedIndex={attachMode === 'existing' ? 0 : 1}
+          onSelectedIndexChange={(index) =>
+            setAttachMode(index === 0 ? 'existing' : 'upload')
+          }
+          items={[
+            { text: 'From Existing' },
+            { text: 'Upload New' },
+          ]}
+        />
+        {attachMode === 'existing' ? (
+          <>
             {attachLoading ? (
               <LoadPanel visible={true} />
             ) : attachDocuments.length === 0 ? (
@@ -318,73 +329,79 @@ export const Chat: React.FC = () => {
                 <Pager showPageSizeSelector={true} />
               </DataGrid>
             )}
-          </Tab>
-          <Tab title="Upload New">
-            <Form formData={{}}>
-              <Item
-                dataField="financialYear"
-                editorType="dxTextBox"
-                editorOptions={{
-                  value: uploadFinancialYear,
-                  onValueChanged: (e: any) => setUploadFinancialYear(e.value),
-                  placeholder: 'e.g., 2024-25',
-                }}
-              >
-                <Label text="Financial Year" />
-                <RequiredRule />
-              </Item>
-              <Item
-                dataField="folderName"
-                editorType="dxTextBox"
-                editorOptions={{
-                  value: uploadFolderName,
-                  onValueChanged: (e: any) => setUploadFolderName(e.value),
-                  placeholder: 'e.g., Tax Returns',
-                }}
-              >
-                <Label text="Folder Name" />
-                <RequiredRule />
-              </Item>
-              <Item
-                dataField="file"
-                editorType="dxFileUploader"
-                editorOptions={{
-                  accept: '*',
-                  uploadMode: 'useForm',
-                  onValueChanged: (e: any) => {
-                    if (e.value && e.value.length > 0) {
-                      setUploadFile(e.value[0]);
-                    }
-                  },
-                }}
-              >
-                <Label text="File" />
-                <RequiredRule />
-              </Item>
-              <Item>
-                <div className="dx-form-actions">
-                  <Button
-                    text="Cancel"
-                    stylingMode="outlined"
-                    onClick={() => {
-                      setShowAttachModal(false);
-                      setUploadFinancialYear('');
-                      setUploadFolderName('');
-                      setUploadFile(null);
+          </>
+        ) : (
+          <Form formData={{}}>
+            <Item
+              dataField="financialYear"
+              editorType="dxTextBox"
+              editorOptions={{
+                value: uploadFinancialYear,
+                onValueChanged: (e: any) => setUploadFinancialYear(e.value),
+                placeholder: 'e.g., 2024-25',
+              }}
+            >
+              <Label text="Financial Year" />
+              <RequiredRule />
+            </Item>
+            <Item
+              dataField="folderName"
+              editorType="dxTextBox"
+              editorOptions={{
+                value: uploadFolderName,
+                onValueChanged: (e: any) => setUploadFolderName(e.value),
+                placeholder: 'e.g., Tax Returns',
+              }}
+            >
+              <Label text="Folder Name" />
+              <RequiredRule />
+            </Item>
+            <Item
+              render={() => (
+                <>
+                  <Label text="File" />
+                  <FileUploader
+                    accept="*"
+                    uploadMode="useForm"
+                    onValueChanged={(e: any) => {
+                      if (e.value && e.value.length > 0) {
+                        setUploadFile(e.value[0]);
+                      }
                     }}
-                    disabled={uploading}
                   />
-                  <Button
-                    text={uploading ? 'Uploading...' : 'Upload & Attach'}
-                    type="default"
-                    onClick={handleUploadSubmit}
-                    disabled={uploading || !uploadFile || !uploadFinancialYear || !uploadFolderName}
-                  />
-                </div>
-              </Item>
-            </Form>
-          </Tab>
-        </Tabs>
+                </>
+              )}
+            >
+              <RequiredRule />
+            </Item>
+            <Item>
+              <div className="dx-form-actions">
+                <Button
+                  text="Cancel"
+                  stylingMode="outlined"
+                  onClick={() => {
+                    setShowAttachModal(false);
+                    setUploadFinancialYear('');
+                    setUploadFolderName('');
+                    setUploadFile(null);
+                  }}
+                  disabled={uploading}
+                />
+                <Button
+                  text={uploading ? 'Uploading...' : 'Upload & Attach'}
+                  type="default"
+                  onClick={handleUploadSubmit}
+                  disabled={
+                    uploading ||
+                    !uploadFile ||
+                    !uploadFinancialYear ||
+                    !uploadFolderName
+                  }
+                />
+              </div>
+            </Item>
+          </Form>
+        )}
       </Popup>
     </div>
   );
