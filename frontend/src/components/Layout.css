@@ -43,7 +43,19 @@
   flex-direction: column;
   padding: 8px 0;
   background: #ffffff;
-  height: 100%;
+  position: fixed;
+  top: 56px;
+  /* below header */
+  left: 0;
+  width: 240px;
+  bottom: 0;
+  transform: translateX(-100%);
+  transition: transform 0.2s ease-out;
+  z-index: 90;
+}
+
+.side-nav-open {
+  transform: translateX(0);
 }
 
 .side-nav-item {
@@ -66,6 +78,21 @@
 .side-nav-item.active {
   background: #e3f2fd;
   color: #1976d2;
+}
+
+.side-nav-backdrop {
+  position: fixed;
+  top: 56px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 80;
+}
+
+.dx-main-content {
+  flex: 1;
+  padding: 20px;
 }
 
 .user-panel {

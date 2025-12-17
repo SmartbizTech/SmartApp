@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import type { ReactNode } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import Drawer from "devextreme-react/drawer";
 import { UserPanel } from "./UserPanel";
 import "./Layout.css";
 
@@ -14,7 +13,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [navOpen, setNavOpen] = useState(false);
 
   const isActive = (path: string) => location.pathname.startsWith(path);
 
@@ -55,7 +54,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         <button
           type="button"
           className="menu-toggle"
-          onClick={() => setDrawerOpen(!drawerOpen)}
+          onClick={() => setNavOpen((open) => !open)}
         >
           ☰
         </button>
@@ -70,35 +69,30 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         <UserPanel user={user} onLogout={logout} />
       </header>
 
-      <Drawer
-        opened={drawerOpen}
-        openedStateMode="overlap"
-        position="before"
-        revealMode="slide"
-        height="100%"
-        closeOnOutsideClick={true}
-        onOpenedChange={setDrawerOpen}
-        render={() => (
-          <nav className="side-nav">
-            {menuItems.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                className={`side-nav-item ${isActive(item.id) ? "active" : ""}`}
-                onClick={() => {
-                  navigate(item.id);
-                  setDrawerOpen(false);
-                }}
-              >
-                <span className={`dx-icon dx-icon-${item.icon}`} />
-                <span>{item.text}</span>
-              </button>
-            ))}
-          </nav>
-        )}
-      >
-        <div className="dx-drawer-content">{children}</div>
-      </Drawer>
+      {/* Side navigation drawer */}
+      <nav className={`side-nav ${navOpen ? "side-nav-open" : ""}`}>
+        {menuItems.map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            className={`side-nav-item ${isActive(item.id) ? "active" : ""}`}
+            onClick={() => {
+              navigate(item.id);
+              setNavOpen(false);
+            }}
+          >
+            <span className={`dx-icon dx-icon-${item.icon}`} />
+            <span>{item.text}</span>
+          </button>
+        ))}
+      </nav>
+
+      {/* Backdrop for mobile */}
+      {navOpen && (
+        <div className="side-nav-backdrop" onClick={() => setNavOpen(false)} />
+      )}
+
+      <main className="dx-main-content">{children}</main>
     </div>
   );
 };
