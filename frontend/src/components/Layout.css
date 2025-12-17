@@ -4,6 +4,33 @@
   flex-direction: column;
 }
 
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  height: 56px;
+  background: #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.menu-toggle {
+  border: none;
+  background: none;
+  font-size: 22px;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+.app-title {
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
 .dx-drawer-content {
   flex: 1;
   padding: 20px;

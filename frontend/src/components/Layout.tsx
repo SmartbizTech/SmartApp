@@ -2,10 +2,8 @@ import React, { useState } from "react";
 import type { ReactNode } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import Toolbar, { Item } from "devextreme-react/toolbar";
 import Drawer from "devextreme-react/drawer";
 import List from "devextreme-react/list";
-import { Button } from "devextreme-react/button";
 import { UserPanel } from "./UserPanel";
 import "./Layout.css";
 
@@ -34,27 +32,29 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         { id: "/calendar", text: "Calendar", icon: "event" },
         { id: "/chat", text: "Messages", icon: "message" },
       ];
-    } else {
-      const items = [
-        { id: "/dashboard", text: "Dashboard", icon: "home" },
-        { id: "/clients", text: "Clients", icon: "group" },
-        { id: "/documents", text: "Documents", icon: "file" },
-        { id: "/tasks", text: "Tasks", icon: "checklist" },
-        { id: "/calendar", text: "Calendar", icon: "event" },
-        { id: "/chat", text: "Messages", icon: "message" },
-      ];
-      if (user?.role === "CA_ADMIN") {
-        items.splice(2, 0, { id: "/team", text: "Team", icon: "user" });
-      }
-      return items;
     }
+
+    const items = [
+      { id: "/dashboard", text: "Dashboard", icon: "home" },
+      { id: "/clients", text: "Clients", icon: "group" },
+      { id: "/documents", text: "Documents", icon: "file" },
+      { id: "/tasks", text: "Tasks", icon: "checklist" },
+      { id: "/calendar", text: "Calendar", icon: "event" },
+      { id: "/chat", text: "Messages", icon: "message" },
+    ];
+    if (user?.role === "CA_ADMIN") {
+      items.splice(2, 0, { id: "/team", text: "Team", icon: "user" });
+    }
+    return items;
   };
 
   const menuItems = getNavItems();
 
   const onMenuItemClick = (e: any) => {
-    navigate(e.itemData.id);
-    setDrawerOpen(false);
+    if (e?.itemData?.id) {
+      navigate(e.itemData.id);
+      setDrawerOpen(false);
+    }
   };
 
   const menuItemRender = (item: any) => {
@@ -67,39 +67,26 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     );
   };
 
-  const toolbarItems = [
-    {
-      widget: "dxButton",
-      location: "before",
-      options: {
-        icon: "menu",
-        onClick: () => setDrawerOpen(!drawerOpen),
-        stylingMode: "text",
-      },
-    },
-    {
-      widget: "dxButton",
-      location: "before",
-      options: {
-        text: "CA Portal",
-        stylingMode: "text",
-        onClick: () =>
-          navigate(user?.role === "SUPER_ADMIN" ? "/admin" : "/dashboard"),
-      },
-    },
-    {
-      location: "after",
-      template: "userPanel",
-    },
-  ];
-
   return (
     <div className="dx-layout">
-      <Toolbar items={toolbarItems}>
-        <Item location="after" template="userPanel">
-          <UserPanel user={user} onLogout={logout} />
-        </Item>
-      </Toolbar>
+      <header className="app-header">
+        <button
+          type="button"
+          className="menu-toggle"
+          onClick={() => setDrawerOpen(!drawerOpen)}
+        >
+          ☰
+        </button>
+        <div
+          className="app-title"
+          onClick={() =>
+            navigate(user?.role === "SUPER_ADMIN" ? "/admin" : "/dashboard")
+          }
+        >
+          CA Portal
+        </div>
+        <UserPanel user={user} onLogout={logout} />
+      </header>
 
       <Drawer
         opened={drawerOpen}
